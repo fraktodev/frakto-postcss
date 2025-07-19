@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://frakto.dev/">
-    <img src="https://frakto.dev/dist/img/logos/frakto-iso.png" alt="Bootstrap logo" width="150" height="173">
+    <img src="https://frakto.dev/dist/img/logos/frakto-iso.png" alt="Frakto logo" width="150" height="173">
   </a>
   <br>
 	<strong>Frakto Postcss</strong>
