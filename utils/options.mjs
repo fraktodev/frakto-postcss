@@ -5,8 +5,10 @@ import fs from 'fs';
 
 // Defaults
 const DEFAULTS = {
+	minify: true,
 	purge: true,
 	tagSafeList: [],
+	idSafeList: [],
 	classSafeList: [],
 	includePaths: '.',
 	excludePaths: [
@@ -38,32 +40,30 @@ const DEFAULTS = {
 };
 
 /**
- * Retrieves the resolved plugin options based on default values and user configuration.
+ * Retrieves the final plugin options by merging defaults, inline settings,
+ * optional configuration file, and mode-based enforcement.
  *
- * If a `frakto.config.mjs` file is detected at the project root, its values override the defaults.
- * In that case, any options passed inline to the plugin are ignored completely.
- *
- * @param {Object} inlineOptions  Optional. Options provided directly when invoking the plugin.
- *                                Ignored if a config file is present. Default: {}.
+ * @param {Object} inlineOptions  Inline options passed directly to the plugin. Default: {}.
+ * @param {string} mode           Optional. Build mode affecting purge and minify behavior. Accepts: 'development' or 'production'. Default: 'production'.
  *
  * @returns {Object}
  */
-export const resolveOptions = (inlineOptions = {}) => {
+export const resolveOptions = (inlineOptions, mode = 'production') => {
 	const configPath = path.resolve(process.cwd(), 'frakto.config.mjs');
+
+	let options = { ...DEFAULTS, ...inlineOptions };
 
 	if (fs.existsSync(configPath)) {
 		const require = createRequire(import.meta.url);
 		const rawConfig = require(configPath);
-		const config = rawConfig.default ?? rawConfig;
 
-		return {
-			...DEFAULTS,
-			...config
-		};
+		options = { ...DEFAULTS, ...(rawConfig.default ?? rawConfig) };
 	}
 
-	return {
-		...DEFAULTS,
-		...inlineOptions
-	};
+	if (mode === 'development') {
+		options.purge = false;
+		options.minify = false;
+	}
+
+	return options;
 };

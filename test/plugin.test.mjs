@@ -24,6 +24,7 @@ describe('Frakto PostCSS Plugin', () => {
 		const output = result.css;
 
 		expect(output).toContain('h1');
+		expect(output).toContain('#main');
 		expect(output).not.toMatch(/^\s*p\s*\{/m);
 		expect(output).not.toContain('.grid');
 		expect(output).not.toContain('.unlayered');

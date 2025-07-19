@@ -6,6 +6,10 @@
 }
 
 @layer base {
+	#main {
+		margin: auto;
+		max-width: 600px;
+	}
 	h1 {
 		font-size: 2rem;
 	}

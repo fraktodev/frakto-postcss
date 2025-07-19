@@ -90,9 +90,54 @@ export const resolveSource = (includePaths, excludePaths, files) => {
 };
 
 /**
- * Retrieves all CSS class names from HTML, React (JSX), or Astro source content.
+ * Retrieves all HTML-like tag names from the given content.
+ * Supports tag extraction from HTML, React (JSX), and Astro files.
  *
- * Accepts static `class` attributes (HTML, Astro) and `className` attributes (React).
+ * @param {string} content The full content to extract from.
+ *
+ * @returns {string[]}
+ */
+export const getTags = (content) => {
+	if (typeof content !== 'string') return [];
+
+	const tagRegex = /<([a-zA-Z][a-zA-Z0-9-]*)\b[^>]*>/g;
+	const tags = new Set();
+
+	let match;
+	while ((match = tagRegex.exec(content)) !== null) {
+		tags.add(match[1].toLowerCase());
+	}
+
+	return [...tags];
+};
+
+/**
+ * Retrieves all ID selectors from the given content.
+ * Supports `id="..."` attributes in HTML, Astro and JSX-like syntax.
+ *
+ * @param {string} content The full content to extract from.
+ *
+ * @returns {string[]}
+ */
+export const getIds = (content) => {
+	if (typeof content !== 'string') return [];
+
+	const idRegex = /\bid\s*=\s*["']([^"']+)["']/gi;
+	const matches = [...content.matchAll(idRegex)];
+	const ids = new Set();
+
+	for (const match of matches) {
+		match[1].split(/\s+/).forEach((id) => {
+			if (id.trim()) ids.add(id.trim());
+		});
+	}
+
+	return [...ids];
+};
+
+/**
+ * Retrieves all CSS class names from the given content.
+ * Supports `class="..."` attributes in HTML, Astro, and `className="..."` in JSX/React.
  *
  * @param {string} content The full content to extract from.
  *
@@ -115,29 +160,6 @@ export const getClasses = (content) => {
 };
 
 /**
- * Retrieves all HTML-like tag names from the given content.
- *
- * Supports tag extraction from HTML, React (JSX), and Astro files.
- *
- * @param {string} content The full content to extract from.
- *
- * @returns {string[]}
- */
-export const getTags = (content) => {
-	if (typeof content !== 'string') return [];
-
-	const tagRegex = /<([a-zA-Z][a-zA-Z0-9-]*)\b[^>]*>/g;
-	const tags = new Set();
-
-	let match;
-	while ((match = tagRegex.exec(content)) !== null) {
-		tags.add(match[1].toLowerCase());
-	}
-
-	return [...tags];
-};
-
-/**
  * Retrieves the purged rule set by removing selectors not found in safe lists.
  *
  * Iterates over all rule selectors and validates tags, classes, and universal selectors
@@ -145,11 +167,12 @@ export const getTags = (content) => {
  *
  * @param {Object}            container       The PostCSS root or node containing CSS rules.
  * @param {string[]}          tagWhiteList    Tags that are allowed to remain during purging.
+ * @param {(string|RegExp)[]} idWhiteList     Ids or patterns allowed during purging.
  * @param {(string|RegExp)[]} classWhiteList  Classes or patterns allowed during purging.
  *
  * @returns {void}
  */
-export const purgeNodes = (container, tagWhiteList, classWhiteList) => {
+export const purgeNodes = (container, tagWhiteList, idWhiteList, classWhiteList) => {
 	const globalWhiteList = [':root', '*', 'html', 'body'];
 
 	container.walkRules((rule) => {
@@ -164,6 +187,17 @@ export const purgeNodes = (container, tagWhiteList, classWhiteList) => {
 
 					selector.walk((node) => {
 						if (node.type === 'tag' && !tagWhiteList.includes(node.value)) {
+							isValid = false;
+						}
+
+						if (
+							node.type === 'id' &&
+							!idWhiteList.some((safe) =>
+								typeof safe === 'string'
+									? safe === node.value
+									: safe instanceof RegExp && safe.test(node.value)
+							)
+						) {
 							isValid = false;
 						}
 

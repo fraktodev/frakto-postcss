@@ -1,6 +1,6 @@
 // Dependencies
 import { resolveOptions } from './utils/options.mjs';
-import { getClasses, getTags, resolveSource, purgeNodes } from './utils/purge.mjs';
+import { getTags, getIds, getClasses, resolveSource, purgeNodes } from './utils/purge.mjs';
 import {
 	formatNode,
 	getLayers,
@@ -11,21 +11,21 @@ import {
 
 /**
  * Retrieves the configured PostCSS plugin instance for processing Frakto layers and purging rules.
- *
  * Applies layer reordering, orphan grouping, media query normalization,
- * and optional purging based on configured tag and class safe lists.
+ * and optional minify and purging based on configured tag and class safe lists.
  *
- * @param {Object} opts  Optional. Configuration overrides for the plugin. Default: {}.
+ * @param {Object} opts Optional. Configuration overrides for the plugin. Default: {}.
+ * @param {string} mode Optional. Execution mode (e.g., 'development' or 'production'). Default: process.env.NODE_ENV or 'production'.
  *
  * @returns {Object}
  */
-const fraktoPostCSS = (opts = {}) => {
-	const options = resolveOptions(opts);
+const fraktoPostCSS = (opts = {}, mode = process.env.NODE_ENV || 'production') => {
+	const options = resolveOptions(opts, mode);
 
 	return {
 		postcssPlugin: 'frakto-postcss',
 		Once(root) {
-			let source, tagWhiteList, classWhiteList;
+			let source, tagWhiteList, idWhiteList, classWhiteList;
 			const layersPrinted = [];
 			const layers = getLayers(root);
 			const orphanLayer = createOrphansLayer(root, options.orphansLayerName);
@@ -34,6 +34,7 @@ const fraktoPostCSS = (opts = {}) => {
 			if (options.purge === true) {
 				source = resolveSource(options.includePaths, options.excludePaths, options.files);
 				tagWhiteList = [...getTags(source), ...options.tagSafeList];
+				idWhiteList = [...getIds(source), ...options.idSafeList];
 				classWhiteList = [...getClasses(source), ...options.classSafeList];
 			}
 
@@ -52,7 +53,7 @@ const fraktoPostCSS = (opts = {}) => {
 				layerData.forEach((layer) => {
 					// Purge rules from layers except reset and theme
 					if (options.purge && !['reset', 'theme'].includes(layerName)) {
-						purgeNodes(layer, tagWhiteList, classWhiteList);
+						purgeNodes(layer, tagWhiteList, idWhiteList, classWhiteList);
 					}
 
 					// Normalize and sort media queries within each layer
