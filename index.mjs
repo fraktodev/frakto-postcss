@@ -1,13 +1,13 @@
 // Dependencies
 import { resolveOptions } from './utils/options.mjs';
-import { getTags, getIds, getClasses, resolveSource, purgeNodes } from './utils/purge.mjs';
 import {
 	formatNode,
 	getLayers,
 	createOrphansLayer,
 	createOrderLayer,
 	groupAndSortMediaQueries
-} from './utils/formatter.mjs';
+} from './utils/format.mjs';
+import { getTags, getIds, getClasses, resolveSource, purgeNodes } from './utils/purge.mjs';
 
 /**
  * Retrieves the configured PostCSS plugin instance for processing Frakto layers and purging rules.
