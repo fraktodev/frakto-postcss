@@ -21,16 +21,21 @@ import {
  */
 const fraktoPostCSS = (opts = {}) => {
 	const options = resolveOptions(opts);
-	const source = resolveSource(options.includePaths, options.excludePaths, options.files);
 
 	return {
 		postcssPlugin: 'frakto-postcss',
 		Once(root) {
+			let source, tagWhiteList, classWhiteList;
 			const layersPrinted = [];
 			const layers = getLayers(root);
 			const orphanLayer = createOrphansLayer(root, options.orphansLayerName);
-			const tagWhiteList = [...getTags(source), ...options.tagSafeList];
-			const classWhiteList = [...getClasses(source), ...options.classSafeList];
+
+			// Only resolve and whitelist tags/classes if purging is enabled
+			if (options.purge === true) {
+				source = resolveSource(options.includePaths, options.excludePaths, options.files);
+				tagWhiteList = [...getTags(source), ...options.tagSafeList];
+				classWhiteList = [...getClasses(source), ...options.classSafeList];
+			}
 
 			// Insert orphan layer into layer map if it exists
 			if (orphanLayer) {
