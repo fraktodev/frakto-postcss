@@ -1,0 +1,9 @@
+# Dependencies
+**/node_modules/
+
+# Editor & system config
+**/.local
+**/.DS_Store
+
+# Build control files
+**/package-lock.json

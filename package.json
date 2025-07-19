@@ -1,0 +1,43 @@
+{
+	"name": "@frakto/postcss",
+	"version": "1.0.0-beta",
+	"description": "A PostCSS plugin that fragments, optimizes, and reconstructs your CSS the Frakto way.",
+	"homepage": "https://frakto.dev",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/fraktodev/frakto-postcss"
+	},
+	"bugs": {
+		"url": "https://github.com/fraktodev/frakto-postcss/issues"
+	},
+	"author": "Frakto",
+	"license": "MIT",
+	"type": "module",
+	"main": "index.mjs",
+	"keywords": [
+		"postcss",
+		"plugin",
+		"formatter",
+		"purge-css",
+		"css",
+		"layers",
+		"media-query",
+		"frakto",
+		"scss",
+		"optimization"
+	],
+	"scripts": {
+		"test": "vitest run"
+	},
+	"dependencies": {
+		"picocolors": "^1.0.0",
+		"postcss-selector-parser": "^7.1.0"
+	},
+	"peerDependencies": {
+		"postcss": "^8.0.0"
+	},
+	"devDependencies": {
+		"postcss": "^8.5.6",
+		"vitest": "^3.2.4"
+	}
+}

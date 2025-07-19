@@ -1,0 +1,20 @@
+# Dependencies
+**/node_modules/
+
+# Editor & system config
+.vscode/
+.github/
+**/.DS_Store
+**/.local
+
+# Build control
+.gitignore
+.npmignore
+**/package-lock.json
+
+# Development only
+test/
+
+# Documentation
+CODE_OF_CONDUCT.md
+SECURITY.md

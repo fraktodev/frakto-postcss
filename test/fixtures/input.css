@@ -1,0 +1,43 @@
+@layer reset {
+	* {
+		margin: 0;
+		padding: 0;
+	}
+}
+
+@layer base {
+	h1 {
+		font-size: 2rem;
+	}
+	p {
+		font-size: 1rem;
+	}
+}
+
+@layer layout.grid {
+	.grid {
+		display: grid;
+	}
+}
+
+@layer shortcuts {
+	.btn {
+		padding: 1rem;
+		background: blue;
+	}
+	.card {
+		border-radius: 10px;
+	}
+	.ghost {
+		opacity: 0;
+	}
+	@media (min-width: 480px) {
+		.xs\:fs-1 {
+			font-size: 1rem;
+		}
+	}
+}
+
+.unlayered {
+	color: red;
+}
