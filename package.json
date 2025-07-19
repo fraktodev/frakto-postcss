@@ -3,6 +3,9 @@
 	"version": "1.0.0-beta",
 	"description": "A PostCSS plugin that fragments, optimizes, and reconstructs your CSS the Frakto way.",
 	"homepage": "https://frakto.dev",
+	"publishConfig": {
+		"access": "public"
+	},
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/fraktodev/frakto-postcss"
