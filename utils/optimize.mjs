@@ -4,7 +4,7 @@ import { atRule } from 'postcss';
 /**
  * Ensures a single charset is at the top of the root. If not, moves the first one there.
  *
- * @param {Object} root The PostCSS root containing CSS rules.
+ * @param {Root} root The PostCSS root containing CSS rules.
  *
  * @returns {void}
  */
@@ -17,10 +17,43 @@ export const addRootCharset = (root) => {
 };
 
 /**
+ * Removes comments based on plugin options.
+ *
+ * @param {Object}  node           The PostCSS root or node containing CSS rules.
+ * @param {string}  removeComments The remove comments option. Accepts 'all', 'non-bang', or 'none'.
+ * @param {boolean} minify         The minify option. If true, it may affect comment removal behavior.
+ *
+ * @returns {void}
+ */
+export const removeComments = (node, removeComments, minify) => {
+	let shouldRun = false;
+	let preserveImportant = false;
+
+	if (removeComments === 'all') {
+		shouldRun = true;
+		preserveImportant = false;
+	} else if (removeComments === 'non-bang') {
+		shouldRun = true;
+		preserveImportant = true;
+	} else if (removeComments === 'none' && minify === true) {
+		shouldRun = true;
+		preserveImportant = true;
+	}
+
+	if (!shouldRun) return;
+
+	node.walkComments((comment) => {
+		const isImportant = comment.toString().startsWith('/*!');
+		if (preserveImportant && isImportant) return;
+		comment.remove();
+	});
+};
+
+/**
  * Retrieves and groups `@media` rules by their parameters, then sorts them by priority.
  * Duplicate `@media` queries are merged, preserving node order. Empty rules are removed.
  *
- * @param {AtRule} layer The `@layer` block to process for `@media` queries.
+ * @param {Node} layer The PostCSS layer containing CSS rules.
  *
  * @returns {void}
  */

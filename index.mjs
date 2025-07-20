@@ -43,9 +43,15 @@ const fraktoPostCSS = (ctx = {}, mode = process.env.NODE_ENV || 'production') =>
 				classWhiteList = [...purge.getClasses(source), ...opts.classSafeList];
 			}
 
+			// Remove comments
+			optimize.removeComments(root, opts.removeComments, opts.minify);
+
 			// Iterate through each layer group and apply transformations
 			layers.forEach((layerData, layerName) => {
 				layerData.forEach((layer) => {
+					// Remove comments
+					optimize.removeComments(layer, opts.removeComments, opts.minify);
+
 					// Purge charsets
 					purge.charsets(layer);
 

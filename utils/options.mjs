@@ -5,6 +5,7 @@ import fs from 'fs';
 
 // Defaults
 const DEFAULTS = {
+	removeComments: 'non-bang',
 	addCharset: true,
 	minify: true,
 	purge: true,

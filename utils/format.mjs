@@ -4,7 +4,7 @@ import { atRule } from 'postcss';
 /**
  * Retrieves all `@layer` at-rules from the root and organizes them by name.
  *
- * @param {Root} root The PostCSS root node containing all CSS nodes.
+ * @param {Root} root The PostCSS root containing CSS rules.
  *
  * @returns {Map<string, AtRule[]>}
  */
@@ -30,7 +30,7 @@ export const getLayers = (root) => {
 /**
  * Applies formatting and indentation to a CSS node and its children.
  *
- * @param {Node}   node   The PostCSS node to format.
+ * @param {Node}   node   The PostCSS root or node containing CSS rules.
  * @param {string} indent Optional. Indentation level to apply. Default: ''.
  *
  * @returns {void}
@@ -74,10 +74,10 @@ export const addIndentNode = (node, indent = '') => {
  * Retrieves orphaned nodes and wraps them in a new `@layer` block.
  * This includes all non-layer nodes, excluding comments related to source maps.
  *
- * @param {Root}  root  The PostCSS root node containing all CSS nodes.
+ * @param {Root}   root The PostCSS root containing CSS rules.
  * @param {string} name The name to assign to the newly created `@layer` block.
  *
- * @returns {AtRule}
+ * @returns {AtRule|undefined}
  */
 export const addOrphansLayer = (root, name) => {
 	const orphanLayer = atRule({
@@ -104,7 +104,7 @@ export const addOrphansLayer = (root, name) => {
  * Retrieves a `@layer` rule with layers ordered according to the specified sequence.
  * Layers listed in `order` are placed first, followed by any remaining layers in original order.
  *
- * @param {Root}     root   The PostCSS root node containing all CSS nodes.
+ * @param {Root}     root   The PostCSS root containing CSS rules.
  * @param {string[]} layers The list of all layer names present in the CSS.
  * @param {string[]} order  The preferred order in which layers should be organized.
  *
