@@ -5,7 +5,7 @@
   <br>
 	<strong>Frakto Postcss</strong>
   <p><em>Fragment. Optimize. Reconstruct.</em></p>
-  <img src="https://img.shields.io/badge/version-1.0.0--beta-blue.svg" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.0.0--beta.2-blue.svg" alt="Version">
   <img src="https://img.shields.io/badge/npm-%5E10.0.0-blue.svg?logo=npm&logoColor=white" alt="npm">
   <img src="https://img.shields.io/badge/PostCSS-%5E8.0.0-blue.svg?logo=postcss&logoColor=white" alt="PostCSS">
   <img src="https://img.shields.io/badge/License-MIT-brightgreen.svg" alt="License">
@@ -59,6 +59,8 @@ If a config file is present, inline plugin options will be ignored.
 
 | Option             | Type               | Default     | Description                                                                                                                                                                                                |
 | ------------------ | ------------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `addCharset`       | `boolean`          | `true`      | Ensures the output CSS starts with a `@charset "UTF-8"` declaration. Only added if not already present.                                                                                                    |
+| `minify`           | `boolean`          | `true`      | Enables internal CSS minification (e.g., whitespace trimming, zero units, simplified values) during build mode.                                                                                            |
 | `purge`            | `boolean`          | `true`      | Enables purging of unused CSS classes and tags.                                                                                                                                                            |
 | `tagSafeList`      | `string[]`         | `[]`        | List of tag names to preserve during purging.                                                                                                                                                              |
 | `classSafeList`    | `string[]`         | `[]`        | List of class names to preserve during purging. Supports both literal strings and RegExp patterns. For example: `['btn-primary', /^m[trblxy]?-?\d$/]` will preserve `.btn-primary`, `.mt-1`, `.mx-4`, etc. |

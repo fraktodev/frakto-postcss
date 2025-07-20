@@ -1,6 +1,6 @@
 {
 	"name": "@frakto/postcss",
-	"version": "1.0.0-beta",
+	"version": "1.0.0-beta.2",
 	"description": "A PostCSS plugin that fragments, optimizes, and reconstructs your CSS the Frakto way.",
 	"homepage": "https://frakto.dev",
 	"publishConfig": {
