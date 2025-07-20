@@ -160,6 +160,19 @@ export const getClasses = (content) => {
 };
 
 /**
+ * Removes any charset rules found within a layer.
+ *
+ * @param {Object} container The PostCSS root or node containing CSS rules.
+ *
+ * @returns {void}
+ */
+export const charsets = (container) => {
+	container.walkAtRules('charset', (atRule) => {
+		atRule.remove();
+	});
+};
+
+/**
  * Retrieves the purged rule set by removing selectors not found in safe lists.
  *
  * Iterates over all rule selectors and validates tags, classes, and universal selectors
@@ -172,7 +185,7 @@ export const getClasses = (content) => {
  *
  * @returns {void}
  */
-export const purgeNodes = (container, tagWhiteList, idWhiteList, classWhiteList) => {
+export const nodes = (container, tagWhiteList, idWhiteList, classWhiteList) => {
 	const globalWhiteList = [':root', '*', 'html', 'body'];
 
 	container.walkRules((rule) => {

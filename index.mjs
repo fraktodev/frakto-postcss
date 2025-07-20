@@ -1,13 +1,8 @@
 // Dependencies
-import { resolveOptions } from './utils/options.mjs';
-import {
-	formatNode,
-	getLayers,
-	createOrphansLayer,
-	createOrderLayer,
-	groupAndSortMediaQueries
-} from './utils/format.mjs';
-import { getTags, getIds, getClasses, resolveSource, purgeNodes } from './utils/purge.mjs';
+import * as options from './utils/options.mjs';
+import * as format from './utils/format.mjs';
+import * as optimize from './utils/optimize.mjs';
+import * as purge from './utils/purge.mjs';
 
 /**
  * Retrieves the configured PostCSS plugin instance for processing Frakto layers and purging rules.
@@ -19,28 +14,20 @@ import { getTags, getIds, getClasses, resolveSource, purgeNodes } from './utils/
  *
  * @returns {Object}
  */
-const fraktoPostCSS = (opts = {}, mode = process.env.NODE_ENV || 'production') => {
-	const options = resolveOptions(opts, mode);
+const fraktoPostCSS = (ctx = {}, mode = process.env.NODE_ENV || 'production') => {
+	const opts = options.resolve(ctx, mode);
 
 	return {
 		postcssPlugin: 'frakto-postcss',
 		Once(root) {
 			let source, tagWhiteList, idWhiteList, classWhiteList;
 			const layersPrinted = [];
-			const layers = getLayers(root);
-			const orphanLayer = createOrphansLayer(root, options.orphansLayerName);
-
-			// Only resolve and whitelist tags/classes if purging is enabled
-			if (options.purge === true) {
-				source = resolveSource(options.includePaths, options.excludePaths, options.files);
-				tagWhiteList = [...getTags(source), ...options.tagSafeList];
-				idWhiteList = [...getIds(source), ...options.idSafeList];
-				classWhiteList = [...getClasses(source), ...options.classSafeList];
-			}
+			const layers = format.getLayers(root);
+			const orphansLayer = format.addOrphansLayer(root, opts.orphansLayerName);
 
 			// Insert orphan layer into layer map if it exists
-			if (orphanLayer) {
-				layers.set(options.orphansLayerName, [orphanLayer]);
+			if (orphansLayer) {
+				layers.set(opts.orphansLayerName, [orphansLayer]);
 			}
 
 			// Exit early if layers are not iterable
@@ -48,39 +35,48 @@ const fraktoPostCSS = (opts = {}, mode = process.env.NODE_ENV || 'production') =
 				return;
 			}
 
+			// Only resolve if purging is enabled
+			if (opts.purge === true) {
+				source = purge.resolveSource(opts.includePaths, opts.excludePaths, opts.files);
+				tagWhiteList = [...purge.getTags(source), ...opts.tagSafeList];
+				idWhiteList = [...purge.getIds(source), ...opts.idSafeList];
+				classWhiteList = [...purge.getClasses(source), ...opts.classSafeList];
+			}
+
 			// Iterate through each layer group and apply transformations
 			layers.forEach((layerData, layerName) => {
 				layerData.forEach((layer) => {
+					// Purge charsets
+					purge.charsets(layer);
+
 					// Purge rules from layers except reset and theme
-					if (options.purge && !['reset', 'theme'].includes(layerName)) {
-						purgeNodes(layer, tagWhiteList, idWhiteList, classWhiteList);
+					if (opts.purge && !['reset', 'theme'].includes(layerName)) {
+						purge.nodes(layer, tagWhiteList, idWhiteList, classWhiteList);
 					}
 
 					// Normalize and sort media queries within each layer
 					// and append media queries back into the layer
-					const mediaQueries = groupAndSortMediaQueries(layer);
-					mediaQueries.forEach((media) => {
-						layer.append(media);
-					});
+					optimize.groupAndSortMediaQueries(layer);
 
 					// Append formatted layer to root if it has content
 					if (layer.nodes && layer.nodes.length > 0) {
 						layersPrinted.push(layerName);
-						formatNode(layer);
+						format.addIndentNode(layer);
 						root.append(layer);
 					}
 				});
 			});
 
 			// Generate and prepend layer order metadata
-			const orderLayer = createOrderLayer(layersPrinted, options.layersOrder);
-			if (orderLayer) {
-				root.prepend(orderLayer);
-				formatNode(orderLayer);
+			format.addOrderLayer(root, layersPrinted, opts.layersOrder);
+
+			// Insert charset at the top of the root
+			if (opts.addCharset) {
+				optimize.addRootCharset(root);
 			}
 		}
 	};
 };
 
-// Export
+fraktoPostCSS.postcss = true;
 export default fraktoPostCSS;

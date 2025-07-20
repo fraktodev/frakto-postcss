@@ -5,6 +5,7 @@ import fs from 'fs';
 
 // Defaults
 const DEFAULTS = {
+	addCharset: true,
 	minify: true,
 	purge: true,
 	tagSafeList: [],
@@ -43,15 +44,15 @@ const DEFAULTS = {
  * Retrieves the final plugin options by merging defaults, inline settings,
  * optional configuration file, and mode-based enforcement.
  *
- * @param {Object} inlineOptions  Inline options passed directly to the plugin. Default: {}.
- * @param {string} mode           Optional. Build mode affecting purge and minify behavior. Accepts: 'development' or 'production'. Default: 'production'.
+ * @param {Object} ctx  Inline options passed directly to the plugin. Default: {}.
+ * @param {string} mode Optional. Build mode affecting purge and minify behavior. Accepts: 'development' or 'production'. Default: 'production'.
  *
  * @returns {Object}
  */
-export const resolveOptions = (inlineOptions, mode = 'production') => {
+export const resolve = (ctx, mode = 'production') => {
 	const configPath = path.resolve(process.cwd(), 'frakto.config.mjs');
 
-	let options = { ...DEFAULTS, ...inlineOptions };
+	let options = { ...DEFAULTS, ...ctx };
 
 	if (fs.existsSync(configPath)) {
 		const require = createRequire(import.meta.url);
