@@ -1,71 +1,53 @@
 # Contributing to Frakto PostCSS
 
-## Philosophy
+First off, thank you for considering contributing to this project — your input helps make it better for everyone!
 
-Frakto PostCSS is a specialized tool for transforming and structuring CSS using PostCSS. It is designed to be modular, composable, and optimized for both readability and performance.
+**Frakto PostCSS** is a specialized tool for transforming and structuring CSS using PostCSS. It is designed to be modular, composable, and optimized for both readability and performance.
+
+## Philosophy
 
 Every contribution should aim to preserve the clarity, predictability, and maintainability of the transformation pipeline. Code must be written with long-term extensibility in mind, following consistent patterns and strict syntax rules.
 
 ---
 
-## Emoji Policy
+## Contributing
+
+We welcome community contributions. Whether it's fixing a typo or suggesting a whole new direction, you're invited to help improve this project.
+
+### Bug Reports
+
+If you find an issue with the categorization, a missing property, or any inconsistency, please open a **Bug Report**. Clear examples and context will help us solve it faster.
+
+### Feature Requests
+
+Got an idea to enhance the project? We'd love to hear it. Open a **Feature Request** with a short explanation of your proposal and how it could improve developer experience.
+
+### Pull Requests
+
+Before submitting a pull request, make sure your changes are clear, purposeful, and align with the structure of the project. Always reference the related issue (if any) and explain your reasoning in the PR description. Let’s keep it clean and consistent.
+
+---
+
+## Guidelines
+
+### Emoji Policy
 
 Emojis are strictly prohibited in all code comments, docblocks, commit messages, and documentation.  
 They may not be used under any circumstance. Code should remain clean, professional, and timeless.
 
----
-
-## Language Policy
+### Language Policy
 
 All code, comments, docblocks, commit messages, and documentation must be written in English at all times.  
 No exceptions are allowed. Consistency in language ensures clarity and global accessibility.
 
----
-
-## Structural Consistency Policy
+### Structural Consistency Policy
 
 All functions, classes, objects, and related structures must follow a consistent and uniform pattern throughout the codebase.
 Do not introduce inconsistencies in naming, formatting, or element ordering between different code fragments or versions.
 
 ---
 
-## Commit Message Policy
-
-All commit messages must follow the lowercase format:
-
-```
-type: short description
-```
-
-Multiple types can be combined in a single commit message, separated by commas:
-
-```
-release: v1.0.0, fix: corrected button alignment, feat: added dark mode toggle
-```
-
-Do **not** use capital letters, parentheses, or colons within the type (e.g., avoid `Feat(...)` or `feat():`).
-
-### Allowed Types
-
-| Type     | Purpose                                             |
-| -------- | --------------------------------------------------- |
-| feat     | New feature                                         |
-| fix      | Bug fix                                             |
-| chore    | General maintenance or routine tasks                |
-| docs     | Documentation changes (README, Wiki, comments)      |
-| style    | Code formatting, linting, and style changes         |
-| refactor | Code restructuring with no functional changes       |
-| test     | Unit tests, integration tests, mock setups          |
-| perf     | Performance improvements                            |
-| build    | Changes to build system, dependencies, or packaging |
-| ci       | Continuous integration scripts and configuration    |
-| revert   | Revert a previous commit                            |
-| wip      | Work in progress (non-standard, use with caution)   |
-| release  | Reserved for large commits tied to version releases |
-
----
-
-## Syntax Rules
+## Syntax guidelines
 
 ### JavaScript (Vanilla JS / ES6+)
 
@@ -82,7 +64,9 @@ Do **not** use capital letters, parentheses, or colons within the type (e.g., av
 - Write **pure, modular functions**, unless mutation is explicitly necessary.
 - Always use arrow functions as the default function syntax. Only use traditional `function` declarations when arrow functions are not applicable (e.g., when `this` binding is required).
 
-## Documentation Standards
+---
+
+## Documentation Guidelines
 
 ### 1. Purpose of Docblocks
 
@@ -142,6 +126,12 @@ To ensure structure and readability, apply the following spacing rules:
 
 ---
 
+## License
+
+By contributing your code, you agree to license your contribution under the [MIT License](../LICENSE).
+
+---
+
 ## AI Assistant Policy
 
 ### Role Assumed
@@ -186,7 +176,7 @@ The assistant must propose and implement **elegant, maintainable, and scalable**
 
 ### Strict Mode Compliance
 
-When the user activates **Strict Mode**, the assistant must:
+The assistant must:
 
 - Fully obey the `CONTRIBUTING.md` rules without deviation
 - Avoid all interpretation, explanation, or assumption unless explicitly allowed
