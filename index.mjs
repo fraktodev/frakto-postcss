@@ -15,73 +15,72 @@ import * as purge from './utils/purge.mjs';
  * @returns {Object}
  */
 const fraktoPostCSS = (ctx = {}, mode = process.env.NODE_ENV || 'production') => {
-	const opts = options.resolve(ctx, mode);
+  const opts = options.resolve(ctx, mode);
 
-	return {
-		postcssPlugin: 'frakto-postcss',
-		Once(root) {
-			let source, tagWhiteList, idWhiteList, classWhiteList;
-			const layersPrinted = [];
-			const layers = format.getLayers(root);
-			const orphansLayer = format.addOrphansLayer(root, opts.orphansLayerName);
+  return {
+    postcssPlugin: 'frakto-postcss',
+    Once(root) {
+      let source, tagWhiteList, idWhiteList, classWhiteList;
+      const layersPrinted = [];
+      const layers = format.getLayers(root);
+      const orphansLayer = format.addOrphansLayer(root, opts.orphansLayerName);
 
-			// Insert orphan layer into layer map if it exists
-			if (orphansLayer) {
-				layers.set(opts.orphansLayerName, [orphansLayer]);
-			}
+      // Insert orphan layer into layer map if it exists
+      if (orphansLayer) {
+        layers.set(opts.orphansLayerName, [orphansLayer]);
+      }
 
-			// Exit early if layers are not iterable
-			if (!layers || typeof layers.forEach !== 'function') {
-				return;
-			}
+      // Exit early if layers are not iterable
+      if (!layers || typeof layers.forEach !== 'function') {
+        return;
+      }
 
-			// Only resolve if purging is enabled
-			if (opts.purge === true) {
-				source = purge.resolveSource(opts.includePaths, opts.excludePaths, opts.files);
-				tagWhiteList = [...purge.getTags(source), ...opts.tagSafeList];
-				idWhiteList = [...purge.getIds(source), ...opts.idSafeList];
-				classWhiteList = [...purge.getClasses(source), ...opts.classSafeList];
-			}
+      // Only resolve if purging is enabled
+      if (opts.purge === true) {
+        source = purge.resolveSource(opts.includePaths, opts.excludePaths, opts.files);
+        tagWhiteList = [...purge.getTags(source), ...opts.tagSafeList];
+        idWhiteList = [...purge.getIds(source), ...opts.idSafeList];
+        classWhiteList = [...purge.getClasses(source), ...opts.classSafeList];
+      }
 
-			// Remove comments
-			optimize.removeComments(root, opts.removeComments, opts.minify);
+      // Purge
+      purge.charsets(root);
 
-			// Iterate through each layer group and apply transformations
-			layers.forEach((layerData, layerName) => {
-				layerData.forEach((layer) => {
-					// Remove comments
-					optimize.removeComments(layer, opts.removeComments, opts.minify);
+      // Optimize
+      optimize.comments(root, opts.removeComments, opts.minify);
 
-					// Purge charsets
-					purge.charsets(layer);
+      // Iterate through each layer group and apply transformations
+      layers.forEach((layerData, layerName) => {
+        layerData.forEach((layer) => {
+          // Purge
+          purge.charsets(layer);
+          if (opts.purge && !['reset', 'theme'].includes(layerName)) {
+            purge.nodes(layer, tagWhiteList, idWhiteList, classWhiteList);
+          }
 
-					// Purge rules from layers except reset and theme
-					if (opts.purge && !['reset', 'theme'].includes(layerName)) {
-						purge.nodes(layer, tagWhiteList, idWhiteList, classWhiteList);
-					}
+          // Optimize
+          optimize.mediaQueries(layer);
+          optimize.comments(layer, opts.removeComments, opts.minify);
+          optimize.quotes(layer);
 
-					// Normalize and sort media queries within each layer
-					// and append media queries back into the layer
-					optimize.groupAndSortMediaQueries(layer);
+          // Append formatted layer to root if it has content
+          if (layer.nodes && layer.nodes.length > 0) {
+            layersPrinted.push(layerName);
+            format.addIndentNode(layer);
+            root.append(layer);
+          }
+        });
+      });
 
-					// Append formatted layer to root if it has content
-					if (layer.nodes && layer.nodes.length > 0) {
-						layersPrinted.push(layerName);
-						format.addIndentNode(layer);
-						root.append(layer);
-					}
-				});
-			});
+      // Generate and prepend layer order metadata
+      format.addOrderLayer(root, layersPrinted, opts.layersOrder);
 
-			// Generate and prepend layer order metadata
-			format.addOrderLayer(root, layersPrinted, opts.layersOrder);
-
-			// Insert charset at the top of the root
-			if (opts.addCharset) {
-				optimize.addRootCharset(root);
-			}
-		}
-	};
+      // Insert charset at the top of the root
+      if (opts.addCharset) {
+        optimize.addRootCharset(root);
+      }
+    }
+  };
 };
 
 fraktoPostCSS.postcss = true;
