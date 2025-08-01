@@ -1,7 +1,7 @@
 # Dependencies
 **/node_modules/
 
-# Editor & system config
+# System config
 **/.local
 **/.DS_Store
 
