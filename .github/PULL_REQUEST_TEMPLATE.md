@@ -21,7 +21,7 @@ Please fill out the template below to help us review your pull request efficient
 
 ## Checklist
 
-- [ ] I have read and followed the [contributing guidelines](https://github.com/fraktodev/frakto-postcss/blob/main/.github/CONTRIBUTING.md) guidelines
+- [ ] I have read and followed the [contributing guidelines](./CONTRIBUTING.md) guidelines
 - [ ] Existing tests pass
 - [ ] New tests were added if needed
 - [ ] Code style is consistent with the rest of the project
