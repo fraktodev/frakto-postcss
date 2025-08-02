@@ -66,7 +66,7 @@ Do not introduce inconsistencies in naming, formatting, or element ordering betw
 
 ---
 
-## Documentation Guidelines
+## Documentation guidelines
 
 ### 1. Purpose of Docblocks
 
