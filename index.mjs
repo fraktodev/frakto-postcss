@@ -61,7 +61,8 @@ const fraktoPostCSS = (ctx = {}, mode = process.env.NODE_ENV || 'production') =>
           // Optimize
           optimize.mediaQueries(layer);
           optimize.comments(layer, opts.removeComments, opts.minify);
-          optimize.quotes(layer);
+          //optimize.quotes(layer);
+          optimize.background(layer);
 
           // Append formatted layer to root if it has content
           if (layer.nodes && layer.nodes.length > 0) {

@@ -9,22 +9,22 @@ import { atRule } from 'postcss';
  * @returns {Map<string, AtRule[]>}
  */
 export const getLayers = (root) => {
-	const layers = new Map();
+  const layers = new Map();
 
-	root.each((node) => {
-		if (node.type === 'atrule' && node.name === 'layer') {
-			const name = node.params || 'root';
+  root.each((node) => {
+    if (node.type === 'atrule' && node.name === 'layer') {
+      const name = node.params || 'root';
 
-			if (!layers.has(name)) {
-				layers.set(name, []);
-			}
+      if (!layers.has(name)) {
+        layers.set(name, []);
+      }
 
-			layers.get(name).push(node);
-			node.remove();
-		}
-	});
+      layers.get(name).push(node);
+      node.remove();
+    }
+  });
 
-	return layers;
+  return layers;
 };
 
 /**
@@ -36,38 +36,38 @@ export const getLayers = (root) => {
  * @returns {void}
  */
 export const addIndentNode = (node, indent = '') => {
-	const tab = '\t';
-	const line = '\n';
+  const tab = '\t';
+  const line = '\n';
 
-	// Flatten multiple selectors into one line
-	if (node.type === 'rule' && node.selectors && node.selectors.length > 1) {
-		node.selector = node.selectors.join(', ');
-	}
+  // Flatten multiple selectors into one line
+  if (node.type === 'rule' && node.selectors && node.selectors.length > 1) {
+    node.selector = node.selectors.join(', ');
+  }
 
-	// Apply initial indent
-	node.raws.before = line + indent;
+  // Apply initial indent
+  node.raws.before = line + indent;
 
-	// Recursively indent child nodes
-	if (node.nodes && Array.isArray(node.nodes)) {
-		const childIndent = indent + tab;
+  // Recursively indent child nodes
+  if (node.nodes && Array.isArray(node.nodes)) {
+    const childIndent = indent + tab;
 
-		node.nodes.forEach((child) => {
-			child.raws.before = line + childIndent;
+    node.nodes.forEach((child) => {
+      child.raws.before = line + childIndent;
 
-			// Normalize declarations spacing (key: value)
-			if (child.type === 'decl' && child.raws.between != null) {
-				child.raws.between = ': ';
-			}
+      // Normalize declarations spacing (key: value)
+      if (child.type === 'decl' && child.raws.between != null) {
+        child.raws.between = ': ';
+      }
 
-			// Recurse into children
-			if (child.nodes && child.nodes.length > 0) {
-				addIndentNode(child, childIndent);
-			}
-		});
+      // Recurse into children
+      if (child.nodes && child.nodes.length > 0) {
+        addIndentNode(child, childIndent);
+      }
+    });
 
-		// Line break before closing bracket
-		node.raws.after = line + indent;
-	}
+    // Line break before closing bracket
+    node.raws.after = line + indent;
+  }
 };
 
 /**
@@ -80,24 +80,24 @@ export const addIndentNode = (node, indent = '') => {
  * @returns {AtRule|undefined}
  */
 export const addOrphansLayer = (root, name) => {
-	const orphanLayer = atRule({
-		type: 'atrule',
-		name: 'layer',
-		params: name
-	});
+  const orphanLayer = atRule({
+    type: 'atrule',
+    name: 'layer',
+    params: name
+  });
 
-	let hasContent = false;
+  let hasContent = false;
 
-	root.each((node) => {
-		if (node.type === 'rule' || node.type === 'decl') {
-			node.remove();
-			addIndentNode(node, '\t');
-			orphanLayer.append(node);
-			hasContent = true;
-		}
-	});
+  root.each((node) => {
+    if (node.type === 'rule' || node.type === 'decl') {
+      node.remove();
+      addIndentNode(node, '\t');
+      orphanLayer.append(node);
+      hasContent = true;
+    }
+  });
 
-	return hasContent ? orphanLayer : undefined;
+  return hasContent ? orphanLayer : undefined;
 };
 
 /**
@@ -111,23 +111,23 @@ export const addOrphansLayer = (root, name) => {
  * @returns {void}
  */
 export const addOrderLayer = (root, layers, order) => {
-	if (layers.length === 0) {
-		return;
-	}
+  if (layers.length === 0) {
+    return;
+  }
 
-	// prettier-ignore
-	const orderedLayers = [
+  // prettier-ignore
+  const orderedLayers = [
 		...order.filter((name) => layers.includes(name)),
 		...layers.filter((name) => !order.includes(name))
 	];
 
-	const orderLayer = atRule({
-		type: 'atrule',
-		name: 'layer',
-		parent: undefined,
-		params: orderedLayers.join(', ')
-	});
+  const orderLayer = atRule({
+    type: 'atrule',
+    name: 'layer',
+    parent: undefined,
+    params: orderedLayers.join(', ')
+  });
 
-	addIndentNode(orderLayer);
-	root.prepend(orderLayer);
+  addIndentNode(orderLayer);
+  root.prepend(orderLayer);
 };
