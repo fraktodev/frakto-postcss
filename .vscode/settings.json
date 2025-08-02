@@ -1,34 +1,35 @@
 {
-	"workbench.colorCustomizations": {
-		"activityBar.background": "#7c4dff",
-		"titleBar.activeBackground": "#7c4dff",
-		"titleBar.activeForeground": "#FFFFFF"
-	},
-	"cSpell.words": [
-		"atrule",
-		"benitez",
-		"charsets",
-		"Charsets",
-		"Colormin",
-		"daniel",
-		"disp",
-		"docblocks",
-		"DΔNNY",
-		"fraktal",
-		"Fraktal",
-		"frakto",
-		"fraktodev",
-		"github",
-		"hstack",
-		"npmignore",
-		"pinterest",
-		"postcss",
-		"rowspan",
-		"tiktok",
-		"tumblr",
-		"uncategorized",
-		"unlayered",
-		"vstack",
-		"youtube"
-	]
+  "workbench.colorCustomizations": {
+    "activityBar.background": "#7c4dff",
+    "titleBar.activeBackground": "#7c4dff",
+    "titleBar.activeForeground": "#FFFFFF"
+  },
+  "cSpell.words": [
+    "atrule",
+    "benitez",
+    "charsets",
+    "Charsets",
+    "Colormin",
+    "daniel",
+    "disp",
+    "docblocks",
+    "DΔNNY",
+    "fraktal",
+    "Fraktal",
+    "frakto",
+    "fraktodev",
+    "fusionables",
+    "github",
+    "hstack",
+    "npmignore",
+    "pinterest",
+    "postcss",
+    "rowspan",
+    "tiktok",
+    "tumblr",
+    "uncategorized",
+    "unlayered",
+    "vstack",
+    "youtube"
+  ]
 }
