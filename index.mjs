@@ -21,9 +21,14 @@ const fraktoPostCSS = (ctx = {}, mode = process.env.NODE_ENV || 'production') =>
     postcssPlugin: 'frakto-postcss',
     Once(root) {
       let source, tagWhiteList, idWhiteList, classWhiteList;
+      const layersToReinsert = [];
       const layersPrinted = [];
       const layers = format.getLayers(root);
-      const orphansLayer = format.addOrphansLayer(root, opts.orphansLayerName);
+      const orphansLayer = format.getOrphansLayer(root, opts.orphansLayerName, opts.minify);
+
+      // Purge
+      purge.comments(root, opts.removeComments, opts.minify);
+      purge.charsets(root);
 
       // Insert orphan layer into layer map if it exists
       if (orphansLayer) {
@@ -43,42 +48,45 @@ const fraktoPostCSS = (ctx = {}, mode = process.env.NODE_ENV || 'production') =>
         classWhiteList = [...purge.getClasses(source), ...opts.classSafeList];
       }
 
-      // Purge
-      purge.charsets(root);
-
-      // Optimize
-      optimize.comments(root, opts.removeComments, opts.minify);
-
       // Iterate through each layer group and apply transformations
       layers.forEach((layerData, layerName) => {
         layerData.forEach((layer) => {
           // Purge
+          purge.comments(layer, opts.removeComments, opts.minify);
           purge.charsets(layer);
-          if (opts.purge && !['reset', 'theme'].includes(layerName)) {
+          if (opts.purge && !['theme', 'reset'].includes(layerName)) {
             purge.nodes(layer, tagWhiteList, idWhiteList, classWhiteList);
           }
 
           // Optimize
           optimize.mediaQueries(layer);
-          optimize.comments(layer, opts.removeComments, opts.minify);
           //optimize.quotes(layer);
           optimize.background(layer);
 
-          // Append formatted layer to root if it has content
+          // Append layers to maps.
           if (layer.nodes && layer.nodes.length > 0) {
             layersPrinted.push(layerName);
-            format.addIndentNode(layer);
-            root.append(layer);
+            layersToReinsert.push(layer);
           }
         });
       });
 
-      // Generate and prepend layer order metadata
-      format.addOrderLayer(root, layersPrinted, opts.layersOrder);
+      // Insert order layer into nodesToReinsert map.
+      const orderLayer = format.getOrderLayer(layersPrinted, opts.layersOrder);
+      if (orderLayer) {
+        layersToReinsert.unshift(orderLayer);
+      }
+
+      // Reinsert layers into the root
+      for (const layer of layersToReinsert) {
+        format.indent(layer);
+        root.nodes.push(layer);
+      }
 
       // Insert charset at the top of the root
-      if (opts.addCharset) {
-        optimize.addRootCharset(root);
+      const charset = format.getRootCharset(root);
+      if (opts.addCharset && charset) {
+        root.prepend(charset);
       }
     }
   };

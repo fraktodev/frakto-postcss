@@ -14,79 +14,79 @@ import selectorParser from 'postcss-selector-parser';
  * @returns {string}
  */
 export const resolveSource = (includePaths, excludePaths, files) => {
-	let rawContent = '';
+  let rawContent = '';
 
-	const validExtensions = ['html', 'astro', 'jsx', 'tsx'];
+  const validExtensions = ['html', 'astro', 'jsx', 'tsx'];
 
-	const inputExtensions = Array.isArray(files) ? files : [files];
-	const normalizedExtensions = [];
-	const invalidExtensions = [];
+  const inputExtensions = Array.isArray(files) ? files : [files];
+  const normalizedExtensions = [];
+  const invalidExtensions = [];
 
-	for (const extRaw of inputExtensions) {
-		if (typeof extRaw !== 'string') continue;
+  for (const extRaw of inputExtensions) {
+    if (typeof extRaw !== 'string') continue;
 
-		const ext = extRaw.trim().replace(/^\./, '');
-		if (validExtensions.includes(ext)) {
-			normalizedExtensions.push(`.${ext}`);
-		} else {
-			invalidExtensions.push(`.${ext}`);
-		}
-	}
+    const ext = extRaw.trim().replace(/^\./, '');
+    if (validExtensions.includes(ext)) {
+      normalizedExtensions.push(`.${ext}`);
+    } else {
+      invalidExtensions.push(`.${ext}`);
+    }
+  }
 
-	if (invalidExtensions.length > 0) {
-		console.warn(
-			pc.bold(pc.yellow('[frakto-postcss]:')) +
-				pc.yellow(' The following extensions are not valid and will be ignored:\n') +
-				invalidExtensions.map((e) => pc.yellow(`  - ${e}`)).join('\n')
-		);
-	}
+  if (invalidExtensions.length > 0) {
+    console.warn(
+      pc.bold(pc.yellow('[frakto-postcss]:')) +
+        pc.yellow(' The following extensions are not valid and will be ignored:\n') +
+        invalidExtensions.map((e) => pc.yellow(`  - ${e}`)).join('\n')
+    );
+  }
 
-	const includes = Array.isArray(includePaths) ? includePaths : [includePaths];
-	const excludes = Array.isArray(excludePaths) ? excludePaths : [excludePaths];
+  const includes = Array.isArray(includePaths) ? includePaths : [includePaths];
+  const excludes = Array.isArray(excludePaths) ? excludePaths : [excludePaths];
 
-	const isValidExtension = (filePath) => normalizedExtensions.includes(path.extname(filePath));
-	const shouldExclude = (relPath) => excludes.some((excluded) => relPath.split(path.sep).includes(excluded));
+  const isValidExtension = (filePath) => normalizedExtensions.includes(path.extname(filePath));
+  const shouldExclude = (relPath) => excludes.some((excluded) => relPath.split(path.sep).includes(excluded));
 
-	const walk = (dir) => {
-		let collected = [];
+  const walk = (dir) => {
+    let collected = [];
 
-		for (const entry of fs.readdirSync(dir)) {
-			const fullPath = path.join(dir, entry);
-			const relPath = path.relative(process.cwd(), fullPath);
+    for (const entry of fs.readdirSync(dir)) {
+      const fullPath = path.join(dir, entry);
+      const relPath = path.relative(process.cwd(), fullPath);
 
-			if (shouldExclude(relPath)) continue;
+      if (shouldExclude(relPath)) continue;
 
-			if (fs.statSync(fullPath).isDirectory()) {
-				collected = collected.concat(walk(fullPath));
-			} else if (isValidExtension(fullPath)) {
-				collected.push(fs.readFileSync(fullPath, 'utf8'));
-			}
-		}
+      if (fs.statSync(fullPath).isDirectory()) {
+        collected = collected.concat(walk(fullPath));
+      } else if (isValidExtension(fullPath)) {
+        collected.push(fs.readFileSync(fullPath, 'utf8'));
+      }
+    }
 
-		return collected;
-	};
+    return collected;
+  };
 
-	for (const includePath of includes) {
-		const baseDir = path.resolve(process.cwd(), includePath);
+  for (const includePath of includes) {
+    const baseDir = path.resolve(process.cwd(), includePath);
 
-		if (fs.existsSync(baseDir)) {
-			rawContent += walk(baseDir).join('\n');
-		} else {
-			console.warn(
-				pc.bold(pc.yellow('[frakto-postcss] ')) +
-					pc.yellow('Include path does not exist: ') +
-					pc.bold(pc.yellow(includePath))
-			);
-		}
-	}
+    if (fs.existsSync(baseDir)) {
+      rawContent += walk(baseDir).join('\n');
+    } else {
+      console.warn(
+        pc.bold(pc.yellow('[frakto-postcss] ')) +
+          pc.yellow('Include path does not exist: ') +
+          pc.bold(pc.yellow(includePath))
+      );
+    }
+  }
 
-	if (!rawContent.trim()) {
-		console.warn(
-			`${pc.bold(pc.yellow('[frakto-postcss]'))} ${pc.yellow('No source files matched the given patterns.')}`
-		);
-	}
+  if (!rawContent.trim()) {
+    console.warn(
+      `${pc.bold(pc.yellow('[frakto-postcss]'))} ${pc.yellow('No source files matched the given patterns.')}`
+    );
+  }
 
-	return rawContent;
+  return rawContent;
 };
 
 /**
@@ -98,17 +98,17 @@ export const resolveSource = (includePaths, excludePaths, files) => {
  * @returns {string[]}
  */
 export const getTags = (content) => {
-	if (typeof content !== 'string') return [];
+  if (typeof content !== 'string') return [];
 
-	const tagRegex = /<([a-zA-Z][a-zA-Z0-9-]*)\b[^>]*>/g;
-	const tags = new Set();
+  const tagRegex = /<([a-zA-Z][a-zA-Z0-9-]*)\b[^>]*>/g;
+  const tags = new Set();
 
-	let match;
-	while ((match = tagRegex.exec(content)) !== null) {
-		tags.add(match[1].toLowerCase());
-	}
+  let match;
+  while ((match = tagRegex.exec(content)) !== null) {
+    tags.add(match[1].toLowerCase());
+  }
 
-	return [...tags];
+  return [...tags];
 };
 
 /**
@@ -120,19 +120,19 @@ export const getTags = (content) => {
  * @returns {string[]}
  */
 export const getIds = (content) => {
-	if (typeof content !== 'string') return [];
+  if (typeof content !== 'string') return [];
 
-	const idRegex = /\bid\s*=\s*["']([^"']+)["']/gi;
-	const matches = [...content.matchAll(idRegex)];
-	const ids = new Set();
+  const idRegex = /\bid\s*=\s*["']([^"']+)["']/gi;
+  const matches = [...content.matchAll(idRegex)];
+  const ids = new Set();
 
-	for (const match of matches) {
-		match[1].split(/\s+/).forEach((id) => {
-			if (id.trim()) ids.add(id.trim());
-		});
-	}
+  for (const match of matches) {
+    match[1].split(/\s+/).forEach((id) => {
+      if (id.trim()) ids.add(id.trim());
+    });
+  }
 
-	return [...ids];
+  return [...ids];
 };
 
 /**
@@ -144,19 +144,52 @@ export const getIds = (content) => {
  * @returns {string[]}
  */
 export const getClasses = (content) => {
-	if (typeof content !== 'string') return [];
+  if (typeof content !== 'string') return [];
 
-	const classRegex = /\b(?:class|className)\s*=\s*["']([^"']+)["']/gi;
-	const matches = [...content.matchAll(classRegex)];
-	const classes = new Set();
+  const classRegex = /\b(?:class|className)\s*=\s*["']([^"']+)["']/gi;
+  const matches = [...content.matchAll(classRegex)];
+  const classes = new Set();
 
-	for (const match of matches) {
-		match[1].split(/\s+/).forEach((cls) => {
-			if (cls.trim()) classes.add(cls.trim());
-		});
-	}
+  for (const match of matches) {
+    match[1].split(/\s+/).forEach((cls) => {
+      if (cls.trim()) classes.add(cls.trim());
+    });
+  }
 
-	return [...classes];
+  return [...classes];
+};
+
+/**
+ * Optimizes comments based on plugin options.
+ *
+ * @param {Object}  node           The PostCSS root or node containing CSS rules.
+ * @param {string}  removeComments The remove comments option. Accepts 'all', 'non-bang', or 'none'.
+ * @param {boolean} minify         The minify option. If true, it may affect comment removal behavior.
+ *
+ * @returns {void}
+ */
+export const comments = (node, removeComments, minify) => {
+  let shouldRun = false;
+  let preserveImportant = false;
+
+  if (removeComments === 'all') {
+    shouldRun = true;
+    preserveImportant = false;
+  } else if (removeComments === 'non-bang') {
+    shouldRun = true;
+    preserveImportant = true;
+  } else if (removeComments === 'none' && minify === true) {
+    shouldRun = true;
+    preserveImportant = true;
+  }
+
+  if (!shouldRun) return;
+
+  node.walkComments((comment) => {
+    const isImportant = comment.text.trim().startsWith('!');
+    if (preserveImportant && isImportant) return;
+    comment.remove();
+  });
 };
 
 /**
@@ -167,9 +200,9 @@ export const getClasses = (content) => {
  * @returns {void}
  */
 export const charsets = (node) => {
-	node.walkAtRules('charset', (atRule) => {
-		atRule.remove();
-	});
+  node.walkAtRules('charset', (atRule) => {
+    atRule.remove();
+  });
 };
 
 /**
@@ -186,66 +219,66 @@ export const charsets = (node) => {
  * @returns {void}
  */
 export const nodes = (layer, tagWhiteList, idWhiteList, classWhiteList) => {
-	const globalWhiteList = [':root', '*', 'html', 'body'];
+  const globalWhiteList = [':root', '*', 'html', 'body'];
 
-	layer.walkRules((rule) => {
-		if (!rule.selector) return;
+  layer.walkRules((rule) => {
+    if (!rule.selector) return;
 
-		const keepSelectors = [];
+    const keepSelectors = [];
 
-		try {
-			selectorParser((selectors) => {
-				selectors.each((selector) => {
-					let isValid = true;
+    try {
+      selectorParser((selectors) => {
+        selectors.each((selector) => {
+          let isValid = true;
 
-					selector.walk((node) => {
-						if (node.type === 'tag' && !tagWhiteList.includes(node.value)) {
-							isValid = false;
-						}
+          selector.walk((node) => {
+            if (node.type === 'tag' && !tagWhiteList.includes(node.value)) {
+              isValid = false;
+            }
 
-						if (
-							node.type === 'id' &&
-							!idWhiteList.some((safe) =>
-								typeof safe === 'string'
-									? safe === node.value
-									: safe instanceof RegExp && safe.test(node.value)
-							)
-						) {
-							isValid = false;
-						}
+            if (
+              node.type === 'id' &&
+              !idWhiteList.some((safe) =>
+                typeof safe === 'string'
+                  ? safe === node.value
+                  : safe instanceof RegExp && safe.test(node.value)
+              )
+            ) {
+              isValid = false;
+            }
 
-						if (
-							node.type === 'class' &&
-							!classWhiteList.some((safe) =>
-								typeof safe === 'string'
-									? safe === node.value
-									: safe instanceof RegExp && safe.test(node.value)
-							)
-						) {
-							isValid = false;
-						}
+            if (
+              node.type === 'class' &&
+              !classWhiteList.some((safe) =>
+                typeof safe === 'string'
+                  ? safe === node.value
+                  : safe instanceof RegExp && safe.test(node.value)
+              )
+            ) {
+              isValid = false;
+            }
 
-						if (node.type === 'universal' && !globalWhiteList.includes(node.value)) {
-							isValid = false;
-						}
-					});
+            if (node.type === 'universal' && !globalWhiteList.includes(node.value)) {
+              isValid = false;
+            }
+          });
 
-					if (isValid) {
-						keepSelectors.push(selector.toString());
-					}
-				});
-			}).processSync(rule.selector);
+          if (isValid) {
+            keepSelectors.push(selector.toString());
+          }
+        });
+      }).processSync(rule.selector);
 
-			if (keepSelectors.length === 0) {
-				rule.remove();
-			} else {
-				rule.selector = keepSelectors.join(', ');
-			}
-		} catch (error) {
-			console.warn(
-				pc.bold(pc.yellow('[frakto-postcss]: ')) + pc.yellow(`Error purging selector: ${rule.selector}`),
-				error
-			);
-		}
-	});
+      if (keepSelectors.length === 0) {
+        rule.remove();
+      } else {
+        rule.selector = keepSelectors.join(', ');
+      }
+    } catch (error) {
+      console.warn(
+        pc.bold(pc.yellow('[frakto-postcss]: ')) + pc.yellow(`Error purging selector: ${rule.selector}`),
+        error
+      );
+    }
+  });
 };

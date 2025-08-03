@@ -2,54 +2,6 @@
 import { atRule, list } from 'postcss';
 
 /**
- * Ensures a single charset is at the top of the root. If not, moves the first one there.
- *
- * @param {Root} root The PostCSS root containing CSS rules.
- *
- * @returns {void}
- */
-export const addRootCharset = (root) => {
-  const first = root.first;
-
-  if (!first || first.type !== 'atrule' || first.name !== 'charset' || first.params !== '"UTF-8"') {
-    root.prepend({ type: 'atrule', name: 'charset', params: '"UTF-8"' });
-  }
-};
-
-/**
- * Optimizes comments based on plugin options.
- *
- * @param {Object}  node           The PostCSS root or node containing CSS rules.
- * @param {string}  removeComments The remove comments option. Accepts 'all', 'non-bang', or 'none'.
- * @param {boolean} minify         The minify option. If true, it may affect comment removal behavior.
- *
- * @returns {void}
- */
-export const comments = (node, removeComments, minify) => {
-  let shouldRun = false;
-  let preserveImportant = false;
-
-  if (removeComments === 'all') {
-    shouldRun = true;
-    preserveImportant = false;
-  } else if (removeComments === 'non-bang') {
-    shouldRun = true;
-    preserveImportant = true;
-  } else if (removeComments === 'none' && minify === true) {
-    shouldRun = true;
-    preserveImportant = true;
-  }
-
-  if (!shouldRun) return;
-
-  node.walkComments((comment) => {
-    const isImportant = comment.toString().startsWith('/*!');
-    if (preserveImportant && isImportant) return;
-    comment.remove();
-  });
-};
-
-/**
  * Optimizes strings by enforcing double quotes and removing them when safe.
  * WARNING: Optimization of values is incomplete.
  * Escaped quotes and sequences like \n, \t, \\ may be broken.

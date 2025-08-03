@@ -35,7 +35,7 @@ export const getLayers = (root) => {
  *
  * @returns {void}
  */
-export const addIndentNode = (node, indent = '') => {
+export const indent = (node, initialIndent = '') => {
   const tab = '\t';
   const line = '\n';
 
@@ -45,11 +45,11 @@ export const addIndentNode = (node, indent = '') => {
   }
 
   // Apply initial indent
-  node.raws.before = line + indent;
+  node.raws.before = line + initialIndent;
 
   // Recursively indent child nodes
   if (node.nodes && Array.isArray(node.nodes)) {
-    const childIndent = indent + tab;
+    const childIndent = initialIndent + tab;
 
     node.nodes.forEach((child) => {
       child.raws.before = line + childIndent;
@@ -61,12 +61,12 @@ export const addIndentNode = (node, indent = '') => {
 
       // Recurse into children
       if (child.nodes && child.nodes.length > 0) {
-        addIndentNode(child, childIndent);
+        indent(child, childIndent);
       }
     });
 
     // Line break before closing bracket
-    node.raws.after = line + indent;
+    node.raws.after = line + initialIndent;
   }
 };
 
@@ -79,23 +79,32 @@ export const addIndentNode = (node, indent = '') => {
  *
  * @returns {AtRule|undefined}
  */
-export const addOrphansLayer = (root, name) => {
+export const getOrphansLayer = (root, name) => {
   const orphanLayer = atRule({
     type: 'atrule',
     name: 'layer',
     params: name
   });
 
+  const candidates = [];
   let hasContent = false;
 
   root.each((node) => {
-    if (node.type === 'rule' || node.type === 'decl') {
-      node.remove();
-      addIndentNode(node, '\t');
-      orphanLayer.append(node);
-      hasContent = true;
+    if (
+      node.type === 'rule' ||
+      node.type === 'decl' ||
+      (node.type === 'atrule' && node.name !== 'layer') ||
+      (node.type === 'comment' && !node.text.trim().startsWith('!') && !node.text.trim().startsWith('#'))
+    ) {
+      candidates.push(node);
     }
   });
+
+  for (const node of candidates) {
+    node.remove();
+    orphanLayer.append(node);
+    hasContent = true;
+  }
 
   return hasContent ? orphanLayer : undefined;
 };
@@ -104,15 +113,14 @@ export const addOrphansLayer = (root, name) => {
  * Retrieves a `@layer` rule with layers ordered according to the specified sequence.
  * Layers listed in `order` are placed first, followed by any remaining layers in original order.
  *
- * @param {Root}     root   The PostCSS root containing CSS rules.
  * @param {string[]} layers The list of all layer names present in the CSS.
  * @param {string[]} order  The preferred order in which layers should be organized.
  *
- * @returns {void}
+ * @returns {AtRule|undefined}
  */
-export const addOrderLayer = (root, layers, order) => {
-  if (layers.length === 0) {
-    return;
+export const getOrderLayer = (layers, order) => {
+  if (layers.length <= 1) {
+    return undefined;
   }
 
   // prettier-ignore
@@ -121,13 +129,32 @@ export const addOrderLayer = (root, layers, order) => {
 		...layers.filter((name) => !order.includes(name))
 	];
 
-  const orderLayer = atRule({
+  return atRule({
     type: 'atrule',
     name: 'layer',
     parent: undefined,
     params: orderedLayers.join(', ')
   });
+};
 
-  addIndentNode(orderLayer);
-  root.prepend(orderLayer);
+/**
+ * Retrieves a single charset atRule is at the top of the root. If not, moves the first one there.
+ *
+ * @param {Root} root The PostCSS root containing CSS rules.
+ *
+ * @returns {AtRule|undefined}
+ */
+export const getRootCharset = (root) => {
+  const first = root.first;
+
+  if (!first || first.type !== 'atrule' || first.name !== 'charset') {
+    return atRule({
+      type: 'atrule',
+      name: 'charset',
+      parent: undefined,
+      params: `"UTF-8"`
+    });
+  }
+
+  return undefined;
 };
