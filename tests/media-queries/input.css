@@ -1,0 +1,180 @@
+@charset "UTF-8";
+/*! Medias */
+@media (min-width: 1024px) {
+	.foo {
+		color: red;
+	}
+}
+
+@media (min-width: 768px) {
+	.foo {
+		color: red;
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	.theme-dark {
+		background: black;
+	}
+}
+
+@media print {
+	.print {
+		color: black;
+	}
+}
+
+@media (max-width: 600px) {
+	.bar {
+		color: blue;
+	}
+}
+
+@media (min-width: 768px) {
+	.baz {
+		color: green;
+	}
+}
+
+@media (prefers-color-scheme: dark) {
+	.theme-dark-2 {
+		color: white;
+	}
+}
+
+@media (orientation: landscape) {
+	.landscape {
+		display: flex;
+	}
+}
+
+@media (min-height: 500px) {
+	.tall {
+		padding: 2rem;
+	}
+}
+
+@media (max-width: 600px) {
+	.beta {
+		background: yellow;
+	}
+}
+
+@media (orientation: landscape) {
+	.wide {
+		flex-direction: row;
+	}
+}
+
+@media print {
+	.print-more {
+		font-size: 10pt;
+	}
+}
+
+@media (min-width: 400px) and (max-width: 900px) {
+	.responsive {
+		margin: auto;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.motionless {
+		transition: none;
+	}
+}
+
+@media (prefers-contrast: high) {
+	.contrast {
+		border: 1px solid;
+	}
+}
+
+@media (hover: hover) {
+	.hoverable {
+		background: gray;
+	}
+}
+
+@media (pointer: coarse) {
+	.touch {
+		padding: 2rem;
+	}
+}
+
+@media (resolution: 2dppx) {
+	.retina {
+		image-rendering: crisp-edges;
+	}
+}
+@media (min-width: 500px) and (max-width: 900px) {
+	.combo-1 {
+		color: red;
+	}
+}
+
+@media screen and (min-width: 400px) and (max-height: 700px) {
+	.combo-2 {
+		color: blue;
+	}
+}
+
+@media only screen and (min-height: 300px) and (max-height: 600px) {
+	.combo-3 {
+		background: yellow;
+	}
+}
+
+@media all and (min-width: 30em) and (max-width: 60em) {
+	.combo-4 {
+		padding: 1rem;
+	}
+}
+
+@media (min-width: 920px) {
+	.foo {
+		color: pink;
+	}
+}
+
+@media (min-width: 920px) {
+	.header {
+		color: pink;
+	}
+}
+
+@media (max-width: 1000px) and (min-width: 800px) {
+	.combo-5 {
+		margin: 0;
+	}
+}
+
+@media (min-width: 768px) and (max-width: 1024px) {
+	.combo-6 {
+		border: 1px solid black;
+	}
+}
+
+@media (min-width: 600px) and (max-width: 900px) {
+	.combo-7 {
+		font-weight: bold;
+	}
+}
+
+@media screen and (min-height: 400px) and (max-height: 900px) {
+	.combo-8 {
+		line-height: 1.2;
+	}
+}
+
+@media screen and (min-width: 300px) and (min-height: 200px) {
+	.combo-9 {
+		box-shadow: 0 0 10px black;
+	}
+}
+
+@media (max-height: 500px) and (min-height: 300px) {
+	.combo-10 {
+		transform: scale(1);
+	}
+}

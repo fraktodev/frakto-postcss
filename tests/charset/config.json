@@ -1,6 +1,7 @@
 {
   "options": {
     "addCharset": true,
+    "minify": false,
     "purge": false
   }
 }

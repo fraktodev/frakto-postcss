@@ -146,6 +146,7 @@ export const background = (layer) => {
 export const mediaQueries = (layer) => {
   const mediaMap = new Map();
 
+  // Agrupar por parámetros
   layer.walkAtRules('media', (media) => {
     if (!media.nodes || media.nodes.length === 0) {
       media.remove();
@@ -165,19 +166,65 @@ export const mediaQueries = (layer) => {
     media.remove();
   });
 
-  const orderKey = (param) => {
-    if (/print/.test(param)) return 9999;
-    if (/prefers-color-scheme/.test(param)) return 100;
-    if (/prefers-/.test(param)) return 200;
-    if (/(min|max)-width:\s*(\d+)/.test(param)) {
-      const [, , value] = param.match(/(min|max)-width:\s*(\d+)/);
-      return parseInt(value, 10);
+  // Nueva lógica de orden
+  const getMediaGroupAndWeight = (param) => {
+    const normalized = param.replace(/\s+/g, '');
+    const weights = [
+      { pattern: /prefers-color-scheme/, weight: 10 },
+      { pattern: /prefers-contrast/, weight: 20 },
+      { pattern: /prefers-reduced-motion/, weight: 30 },
+      { pattern: /prefers-reduced-transparency/, weight: 40 },
+      { pattern: /prefers-reduced-data/, weight: 50 },
+      { pattern: /hover/, weight: 60 },
+      { pattern: /pointer/, weight: 70 },
+      { pattern: /orientation/, weight: 80 },
+      { pattern: /resolution/, weight: 90 },
+      { pattern: /print/, weight: 100 }
+    ];
+
+    if (/^\(min-(width|height):/.test(normalized)) {
+      return { group: 1, weight: extractNumeric(param) };
     }
-    return 500;
+    if (/^\(max-(width|height):/.test(normalized)) {
+      return { group: 2, weight: extractNumeric(param) };
+    }
+    if (/\(min-(width|height):.+?\)\s*and\s*\(max-(width|height):/.test(param)) {
+      return { group: 3, weight: extractNumeric(param) };
+    }
+    if (/^(only\s+)?screen\s+and/i.test(param)) {
+      return { group: 4, weight: extractNumeric(param) };
+    }
+    if (/^all\s+and/i.test(param)) {
+      return { group: 5, weight: extractNumeric(param) };
+    }
+    if (/prefers-/.test(param) || /hover|pointer|orientation|resolution|print/.test(param)) {
+      for (const { pattern, weight } of weights) {
+        if (pattern.test(param)) {
+          return { group: 6, weight };
+        }
+      }
+      return { group: 6, weight: 999 };
+    }
+    return { group: 7, weight: 0 };
+  };
+
+  const extractNumeric = (param) => {
+    const matches = [...param.matchAll(/(\d+\.?\d*)(px|em|rem)?/g)];
+    if (!matches.length) return 0;
+
+    return matches.reduce((sum, [val, unit]) => {
+      const num = parseFloat(val);
+      if (unit === 'em' || unit === 'rem') return sum + num * 16;
+      return sum + num;
+    }, 0);
   };
 
   [...mediaMap.entries()]
-    .sort(([a], [b]) => orderKey(a) - orderKey(b))
+    .sort(([a], [b]) => {
+      const gA = getMediaGroupAndWeight(a);
+      const gB = getMediaGroupAndWeight(b);
+      return gA.group - gB.group || gA.weight - gB.weight;
+    })
     .forEach(([, node]) => {
       layer.append(node);
     });
