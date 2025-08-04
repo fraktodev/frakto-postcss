@@ -1,5 +1,4 @@
 @charset "UTF-8";
-/*! Medias */
 @media (min-width: 1024px) {
 	.foo {
 		color: red;

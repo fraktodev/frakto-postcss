@@ -28,7 +28,12 @@ const fraktoPostCSS = (ctx = {}, mode = process.env.NODE_ENV || 'production') =>
 
       // Purge
       purge.comments(root, opts.removeComments, opts.minify);
-      purge.charsets(root);
+
+      // Insert charset at the top of the root
+      if (opts.addCharset) {
+        purge.charsets(root);
+        root.prepend(format.getRootCharset(root));
+      }
 
       // Insert orphan layer into layer map if it exists
       if (orphansLayer) {
@@ -81,12 +86,6 @@ const fraktoPostCSS = (ctx = {}, mode = process.env.NODE_ENV || 'production') =>
       for (const layer of layersToReinsert) {
         format.indent(layer);
         root.nodes.push(layer);
-      }
-
-      // Insert charset at the top of the root
-      const charset = format.getRootCharset(root);
-      if (opts.addCharset && charset) {
-        root.prepend(charset);
       }
     }
   };

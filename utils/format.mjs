@@ -145,16 +145,10 @@ export const getOrderLayer = (layers, order) => {
  * @returns {AtRule|undefined}
  */
 export const getRootCharset = (root) => {
-  const first = root.first;
-
-  if (!first || first.type !== 'atrule' || first.name !== 'charset') {
-    return atRule({
-      type: 'atrule',
-      name: 'charset',
-      parent: undefined,
-      params: `"UTF-8"`
-    });
-  }
-
-  return undefined;
+  return atRule({
+    type: 'atrule',
+    name: 'charset',
+    parent: undefined,
+    params: `"UTF-8"`
+  });
 };
