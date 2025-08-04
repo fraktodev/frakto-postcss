@@ -1,0 +1,12 @@
+@charset "UTF-8";
+@layer base, orphans;
+@layer base {
+	body {
+		color: black;
+	}
+}
+@layer orphans {
+	.a {
+		color: red;
+	}
+}

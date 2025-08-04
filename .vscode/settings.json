@@ -4,6 +4,11 @@
     "titleBar.activeBackground": "#7c4dff",
     "titleBar.activeForeground": "#FFFFFF"
   },
+  "[css]": {
+    "editor.tabSize": 2,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "prettier.useTabs": true
+  },
   "cSpell.words": [
     "atrule",
     "benitez",

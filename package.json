@@ -31,10 +31,10 @@
     "optimization"
   ],
   "scripts": {
-    "test": "vitest run tests/index.test.mjs"
+    "test": "FORCE_COLOR=1 vitest run tests/index.test.mjs"
   },
   "dependencies": {
-    "picocolors": "^1.0.0",
+    "picocolors": "^1.1.1",
     "postcss-selector-parser": "^7.1.0"
   },
   "peerDependencies": {

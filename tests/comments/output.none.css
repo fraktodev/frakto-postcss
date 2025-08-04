@@ -1,0 +1,26 @@
+/*! I am a banner 
+* and I should't be removed
+* never
+*/
+
+/*! Should not remove */
+@layer orphans, test;
+@layer test {
+	/* Should remove */
+	.a {
+		color: red;
+	}
+	/*! Should not remove */
+	.a {
+		color: red;
+	}
+}
+@layer orphans {
+	/* Should remove */
+	.a {
+		color: red;
+	}
+	.a {
+		color: red;
+	}
+}

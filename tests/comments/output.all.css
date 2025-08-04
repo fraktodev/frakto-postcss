@@ -1,0 +1,17 @@
+@layer orphans, test;
+@layer test {
+	.a {
+		color: red;
+	}
+	.a {
+		color: red;
+	}
+}
+@layer orphans {
+	.a {
+		color: red;
+	}
+	.a {
+		color: red;
+	}
+}

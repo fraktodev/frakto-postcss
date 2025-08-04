@@ -1,0 +1,78 @@
+/* Should convert to: background-position: 0% 0%; */
+.box1 {
+	background-position: left top;
+}
+
+/* Should convert to: background-position: 50% 0%; */
+.box2 {
+	background-position: center top;
+}
+
+/* Should convert to: background-position: 100% 50%; */
+.box3 {
+	background-position: right;
+}
+
+/* Should convert to: background-position: 50% 100%; */
+.box4 {
+	background-position: bottom;
+}
+
+/* Should convert to: background: url("img.png") no-repeat 0% 0%; */
+.box5 {
+	background: url('img.png') no-repeat left top;
+}
+
+/* Should convert to: background: url("bg.jpg") repeat-x 100% 0%; */
+.box6 {
+	background: url('bg.jpg') repeat no-repeat right top;
+}
+
+/* Should stay the same (no keywords) */
+.box7 {
+	background-position: 30% 70%;
+}
+
+/* Should convert only keywords inside background */
+.box8 {
+	background: linear-gradient(to bottom, #fff, #000) no-repeat left center;
+}
+
+/* Should become: background-repeat: repeat-x; */
+.bg1 {
+	background-repeat: repeat no-repeat;
+}
+
+/* Should become: background-repeat: repeat-y; */
+.bg2 {
+	background-repeat: no-repeat repeat;
+}
+
+/* Should become: background-repeat: repeat; */
+.bg3 {
+	background-repeat: repeat repeat;
+}
+
+/* Should become: background-repeat: no-repeat; */
+.bg4 {
+	background-repeat: no-repeat no-repeat;
+}
+
+/* Should become: background: url(a.png) repeat-x 0% 0%; */
+.bg5 {
+	background: url(a.png) repeat no-repeat left top;
+}
+
+/* Should remain untouched (not a known pair) */
+.bg6 {
+	background-repeat: round space;
+}
+
+/* Should be merged into: background: red url(bg.png) repeat-x 0% 0%; */
+.hero {
+	background-color: red;
+	background-image: url(bg.png);
+	background-repeat: repeat no-repeat;
+	background-position: left top;
+	background-size: cover;
+}
