@@ -6,6 +6,7 @@ import fs from 'fs';
 // Defaults
 const DEFAULTS_OPTIMIZE = {
   comments: 'non-bang', // all, none, non-bang
+  order: 'frakto', // frakto, alphabetical, concentric, smacss, false
   charset: true,
   mediaQueries: true,
   spacing: true,

@@ -1,0 +1,25 @@
+@layer root {
+	.card {
+		background: #fff no-repeat 50% 50%;
+		background-size: cover;
+		border-left-color: #ccc;
+		border-radius: 8px;
+		border-style: solid;
+		border-top-width: 1px;
+		box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+		color: #333;
+		display: flex;
+		font: bold 1rem Arial, sans-serif;
+		height: auto;
+		justify-content: center;
+		left: 0;
+		line-height: 1.5;
+		margin-bottom: 2rem;
+		padding: 1rem;
+		position: relative;
+		text-align: center;
+		top: 0;
+		width: 100%;
+		z-index: 10;
+	}
+}

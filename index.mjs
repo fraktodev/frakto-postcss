@@ -78,7 +78,8 @@ const fraktoPostCSS = (ctx = {}, mode = process.env.NODE_ENV || 'production') =>
             listStyle: (layer) => optimize.listStyle(layer),
             background: (layer) => optimize.background(layer),
             border: (layer) => optimize.border(layer),
-            outline: (layer) => optimize.outline(layer)
+            outline: (layer) => optimize.outline(layer),
+            order: (layer) => optimize.sortDeclarations(layer, opts.optimize.order)
           };
           Object.entries(optimizeSteps).forEach(([key, fn]) => {
             if (opts.optimize[key]) {

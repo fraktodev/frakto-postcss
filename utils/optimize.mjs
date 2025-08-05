@@ -1,6 +1,12 @@
 // Dependencies
 import { atRule, list } from 'postcss';
 
+// Orders
+import fraktoOrder from './orders/frakto.mjs';
+import smacssOrder from './orders/smacss.mjs';
+import concentricOrder from './orders/concentric-css.mjs';
+import alphabeticalOrder from './orders/alphabetical.mjs';
+
 /**
  * Optimizes comments based on plugin options.
  *
@@ -527,5 +533,49 @@ export const outline = (layer) => {
       decls[found.at(-1)].cloneBefore({ prop: 'outline', value });
       toRemove.forEach((d) => d.remove());
     }
+  });
+};
+
+/**
+ * Sorts all declarations in a layer using the given order style.
+ *
+ * @param {Node}   layer The PostCSS layer to process.
+ * @param {string} style The ordering style: 'frakto', 'smacss', 'concentric-css', or 'alphabetical'
+ *
+ * @returns {Promise<void>}
+ */
+export const sortDeclarations = (layer, style) => {
+  const ORDER_MAP = {
+    frakto: fraktoOrder,
+    smacss: smacssOrder,
+    concentric: concentricOrder,
+    alphabetical: alphabeticalOrder
+  };
+  const orderList = ORDER_MAP[style] || fraktoOrder;
+
+  layer.walkRules((rule) => {
+    const decls = [];
+    const others = [];
+
+    rule.each((node) => {
+      if (node.type === 'decl') {
+        decls.push({ node, key: node.prop });
+      } else {
+        others.push(node);
+      }
+    });
+
+    decls.sort((a, b) => {
+      const ai = orderList.indexOf(a.key);
+      const bi = orderList.indexOf(b.key);
+      if (ai === -1 && bi === -1) return 0;
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    });
+
+    rule.removeAll();
+    decls.forEach(({ node }) => rule.append(node));
+    others.forEach((node) => rule.append(node));
   });
 };
