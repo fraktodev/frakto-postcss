@@ -6,20 +6,18 @@ import { atRule } from 'postcss';
  *
  * @param {Root} root The PostCSS root containing CSS rules.
  *
- * @returns {Map<string, AtRule[]>}
+ * @returns {Object}
  */
 export const getLayers = (root) => {
-  const layers = new Map();
+  const layers = {};
 
   root.each((node) => {
     if (node.type === 'atrule' && node.name === 'layer') {
       const name = node.params || 'root';
 
-      if (!layers.has(name)) {
-        layers.set(name, []);
-      }
+      if (!layers[name]) layers[name] = [];
 
-      layers.get(name).push(node);
+      layers[name].push(node);
       node.remove();
     }
   });
@@ -40,9 +38,8 @@ export const indent = (node, initialIndent = '') => {
   const line = '\n';
 
   // Flatten multiple selectors into one line
-  if (node.type === 'rule' && node.selectors && node.selectors.length > 1) {
+  if (node.type === 'rule' && node.selectors && node.selectors.length > 1)
     node.selector = node.selectors.join(', ');
-  }
 
   // Apply initial indent
   node.raws.before = line + initialIndent;
@@ -55,14 +52,10 @@ export const indent = (node, initialIndent = '') => {
       child.raws.before = line + childIndent;
 
       // Normalize declarations spacing (key: value)
-      if (child.type === 'decl' && child.raws.between != null) {
-        child.raws.between = ': ';
-      }
+      if (child.type === 'decl' && child.raws.between != null) child.raws.between = ': ';
 
       // Recurse into children
-      if (child.nodes && child.nodes.length > 0) {
-        indent(child, childIndent);
-      }
+      if (child.nodes && child.nodes.length > 0) indent(child, childIndent);
     });
 
     // Line break before closing bracket
@@ -138,13 +131,11 @@ export const getOrderLayer = (layers, order) => {
 };
 
 /**
- * Retrieves a single charset atRule is at the top of the root. If not, moves the first one there.
+ * Retrieves a single charset atRule is at the top of the root.
  *
- * @param {Root} root The PostCSS root containing CSS rules.
- *
- * @returns {AtRule|undefined}
+ * @returns {AtRule}
  */
-export const getRootCharset = (root) => {
+export const getRootCharset = () => {
   return atRule({
     type: 'atrule',
     name: 'charset',

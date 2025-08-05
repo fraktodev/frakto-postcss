@@ -37,11 +37,11 @@ const fraktoPostCSS = (ctx = {}, mode = process.env.NODE_ENV || 'production') =>
 
       // Insert orphan layer into layer map if it exists
       if (orphansLayer) {
-        layers.set(opts.layers.orphansName, [orphansLayer]);
+        layers[opts.layers.orphansName] = [orphansLayer];
       }
 
       // Exit early if layers are not iterable
-      if (!layers || typeof layers.forEach !== 'function') {
+      if (Object.keys(layers).length === 0) {
         return;
       }
 
@@ -61,7 +61,7 @@ const fraktoPostCSS = (ctx = {}, mode = process.env.NODE_ENV || 'production') =>
       }
 
       // Iterate through each layer group and apply transformations
-      layers.forEach((layerData, layerName) => {
+      Object.entries(layers).forEach(([layerName, layerData]) => {
         layerData.forEach((layer) => {
           // Purge
           purge.charsets(layer);

@@ -33,6 +33,7 @@ export const comments = (node, remove, minify) => {
 
   if (!shouldRun) return;
 
+  // Iterate through comments
   node.walkComments((comment) => {
     const isImportant = comment.text.trim().startsWith('!');
     if (preserveImportant && isImportant) return;
@@ -41,7 +42,7 @@ export const comments = (node, remove, minify) => {
 };
 
 /**
- * Retrieves and groups `@media` rules by their parameters, then sorts them by priority.
+ * Optimizes and groups `@media` rules by their parameters, then sorts them by priority.
  * Duplicate `@media` queries are merged, preserving node order. Empty rules are removed.
  *
  * @param {Node} layer The PostCSS layer containing CSS rules.
@@ -51,7 +52,7 @@ export const comments = (node, remove, minify) => {
 export const mediaQueries = (layer) => {
   const mediaMap = new Map();
 
-  // Agrupar por parámetros
+  // Iterate through media queries
   layer.walkAtRules('media', (media) => {
     if (!media.nodes || media.nodes.length === 0) {
       media.remove();
@@ -71,7 +72,7 @@ export const mediaQueries = (layer) => {
     media.remove();
   });
 
-  // Nueva lógica de orden
+  // Retrieves media queries order
   const getMediaGroupAndWeight = (param) => {
     const normalized = param.replace(/\s+/g, '');
     const weights = [
@@ -113,6 +114,7 @@ export const mediaQueries = (layer) => {
     return { group: 7, weight: 0 };
   };
 
+  // Extracts media queries numeric params
   const extractNumeric = (param) => {
     const matches = [...param.matchAll(/(\d+\.?\d*)(px|em|rem)?/g)];
     if (!matches.length) return 0;
@@ -124,6 +126,7 @@ export const mediaQueries = (layer) => {
     }, 0);
   };
 
+  // Sorts media queries
   [...mediaMap.entries()]
     .sort(([a], [b]) => {
       const gA = getMediaGroupAndWeight(a);
@@ -147,18 +150,21 @@ export const mediaQueries = (layer) => {
  */
 export const quotes = (layer) => {
   const hasFunction = (value) => /\b[a-zA-Z-]+\s*\(/.test(value);
-  const quotedProps = new Set([
+  const quotedProps = [
+    'animation-name',
     'content',
-    'quotes',
+    'cursor',
     'font-family',
+    'quotes',
+    'list-style',
+    'list-style-image',
     'speak-as',
     'voice-family',
-    'animation-name',
-    'cursor',
-    'list-style',
     'counter-reset',
-    'counter-increment'
-  ]);
+    'counter-increment',
+    'counter-set',
+    'src'
+  ];
 
   layer.walkDecls((decl) => {
     if (hasFunction(decl.value)) {
@@ -175,40 +181,41 @@ export const quotes = (layer) => {
 };
 
 /**
- * Optimizes and fuses margin-related declarations into shorthand.
+ * Optimizes and fuses `margin-*` and `padding-*` declarations into shorthand.
  *
  * @param {Node} layer The PostCSS layer to process.
  *
  * @returns {void}
  */
 export const spacing = (layer) => {
-  const TYPES = ['margin', 'padding'];
-  const PHYSICAL = ['top', 'right', 'bottom', 'left'];
+  const types = ['margin', 'padding'];
+  const positions = ['top', 'right', 'bottom', 'left'];
 
+  // Iterate through rules
   layer.walkRules((rule) => {
-    TYPES.forEach((type) => {
+    types.forEach((type) => {
       const decls = rule.nodes.filter((n) => n.type === 'decl');
 
-      // Handle physical sides
-      const physicalMap = {};
-      PHYSICAL.forEach((side) => {
+      // Merge physical sides
+      const positionsMap = {};
+      positions.forEach((side) => {
         const prop = `${type}-${side}`;
         const decl = decls.find((d) => d.prop === prop);
-        if (decl) physicalMap[side] = decl;
+        if (decl) positionsMap[side] = decl;
       });
 
-      if (PHYSICAL.every((s) => physicalMap[s])) {
+      if (positions.every((s) => positionsMap[s])) {
         const value = [
-          physicalMap.top.value,
-          physicalMap.right.value,
-          physicalMap.bottom.value,
-          physicalMap.left.value
+          positionsMap.top.value,
+          positionsMap.right.value,
+          positionsMap.bottom.value,
+          positionsMap.left.value
         ].join(' ');
-        physicalMap.left.cloneBefore({ prop: type, value });
-        PHYSICAL.forEach((s) => physicalMap[s].remove());
+        positionsMap.left.cloneBefore({ prop: type, value });
+        positions.forEach((s) => positionsMap[s].remove());
       }
 
-      // Handle logical block
+      // Merge logical block
       const blockStart = decls.find((d) => d.prop === `${type}-block-start`);
       const blockEnd = decls.find((d) => d.prop === `${type}-block-end`);
       if (blockStart && blockEnd) {
@@ -218,7 +225,7 @@ export const spacing = (layer) => {
         blockEnd.remove();
       }
 
-      // Handle logical inline
+      // Merge logical inline
       const inlineStart = decls.find((d) => d.prop === `${type}-inline-start`);
       const inlineEnd = decls.find((d) => d.prop === `${type}-inline-end`);
       if (inlineStart && inlineEnd) {
@@ -232,14 +239,14 @@ export const spacing = (layer) => {
 };
 
 /**
- * Optimizes and fuses font-related declarations into shorthand.
+ * Optimizes and fuses `font-*` declarations into shorthand.
  *
  * @param {Node} layer The PostCSS layer to process.
  *
  * @returns {void}
  */
 export const font = (layer) => {
-  const FONT_PROPS = [
+  const fontProps = [
     'font-style',
     'font-variant',
     'font-weight',
@@ -249,12 +256,14 @@ export const font = (layer) => {
     'font-family'
   ];
 
+  // Iterate through rules
   layer.walkRules((rule) => {
     const decls = {};
     const toRemove = [];
 
+    // Iterate through font declarations
     rule.walkDecls(/^font(-(style|variant|weight|stretch|size|family)|line-height)?$/, (decl) => {
-      if (FONT_PROPS.includes(decl.prop)) {
+      if (fontProps.includes(decl.prop)) {
         decls[decl.prop] = decl;
         toRemove.push(decl);
       }
@@ -277,7 +286,7 @@ export const font = (layer) => {
     parts.push(size);
     parts.push(decls['font-family'].value);
 
-    // Insert shorthand before last declaration (typically font-family)
+    // Insert shorthand before last declaration
     decls['font-family'].cloneBefore({
       prop: 'font',
       value: parts.join(' ')
@@ -295,33 +304,39 @@ export const font = (layer) => {
  * @returns {void}
  */
 export const listStyle = (layer) => {
-  const LIST_PROPS = ['type', 'position', 'image'];
+  const listProps = ['type', 'position', 'image'];
 
+  // Iterate through rules
   layer.walkRules((rule) => {
     const decls = {};
     const toRemove = [];
 
+    // Iterate through list style declarations
     rule.walkDecls(/^list-style-(type|position|image)$/, (decl) => {
       const key = decl.prop.replace('list-style-', '');
       decls[key] = decl;
       toRemove.push(decl);
     });
 
+    // Ensure minimum required properties for valid shorthand
     const keys = Object.keys(decls);
     if (keys.length < 2) return;
 
-    const shorthandValue = LIST_PROPS.map((key) => decls[key]?.value)
+    // Build value in proper order
+    const shorthandValue = listProps
+      .map((key) => decls[key]?.value)
       .filter(Boolean)
       .join(' ');
     const insertBefore = decls[keys.at(-1)];
 
+    // Insert shorthand before last declaration
     insertBefore.cloneBefore({ prop: 'list-style', value: shorthandValue });
     toRemove.forEach((d) => d.remove());
   });
 };
 
 /**
- * Optimizes and compresses background-related CSS declarations.
+ * Optimizes and fuses `background-*` declarations into shorthand.
  *
  * @param {Node} layer The PostCSS layer containing CSS rules.
  *
@@ -360,14 +375,14 @@ export const background = (layer) => {
       newParts.push(a);
     }
 
-    if (replaced) {
-      decl.value = newParts.join(' ');
-    }
+    if (replaced) decl.value = newParts.join(' ');
   });
 
   // Optimize background-position
   layer.walkDecls(/^(background|background-position)$/, (decl) => {
     const replacements = { left: '0%', center: '50%', right: '100%', top: '0%', bottom: '100%' };
+    const xPositions = ['left', 'center', 'right'];
+    const yPositions = ['top', 'center', 'bottom'];
     const parts = list.space(decl.value);
     const newParts = [];
     let replaced = false;
@@ -383,31 +398,32 @@ export const background = (layer) => {
 
     if (replaced && newParts.length === 1) {
       const original = parts[0];
-      if (['left', 'center', 'right'].includes(original)) {
+      if (xPositions.includes(original)) {
         newParts.push('50%');
-      } else if (['top', 'center', 'bottom'].includes(original)) {
+      } else if (yPositions.includes(original)) {
         newParts.unshift('50%');
       }
     }
 
-    if (replaced) {
-      decl.value = newParts.join(' ');
-    }
+    if (replaced) decl.value = newParts.join(' ');
   });
 
-  // Fuse multiple background-* into background
+  // Merge background
   layer.walkRules((rule) => {
-    const props = ['color', 'image', 'repeat', 'position'];
-    const decls = Object.fromEntries(props.map((p) => [p, null]));
+    const bgProps = ['color', 'image', 'repeat', 'position'];
+    const decls = Object.fromEntries(bgProps.map((p) => [p, null]));
 
+    // Iterate through background declarations
     rule.walkDecls(/^background-/, (decl) => {
       const key = decl.prop.replace('background-', '');
-      if (props.includes(key)) decls[key] = decl;
+      if (bgProps.includes(key)) decls[key] = decl;
     });
 
-    const fusionables = props.filter((p) => decls[p]);
+    // Ensure minimum required properties for valid shorthand
+    const fusionables = bgProps.filter((p) => decls[p]);
     if (fusionables.length < 2) return;
 
+    // Build value in proper order
     const value = fusionables.map((p) => decls[p].value).join(' ');
     const lastDecl = fusionables.map((p) => decls[p]).pop();
     lastDecl.cloneBefore({ prop: 'background', value });
@@ -416,22 +432,17 @@ export const background = (layer) => {
 };
 
 /**
- * Optimizes and fuses border-related declarations into shorthand.
+ * Optimizes and fuses `border-*` declarations into shorthand.
  *
  * @param {Node} layer The PostCSS layer to process.
  *
  * @returns {void}
  */
 export const border = (layer) => {
-  const BASE_PROPS = ['width', 'style', 'color'];
-  const IMAGE_PROPS = ['source', 'slice', 'width', 'outset', 'repeat'];
-  const PHYSICAL_RADIUS_PROPS = [
-    'top-left-radius',
-    'top-right-radius',
-    'bottom-right-radius',
-    'bottom-left-radius'
-  ];
-  const DIRECTIONS = [
+  const borderProps = ['width', 'style', 'color'];
+  const imageProps = ['source', 'slice', 'width', 'outset', 'repeat'];
+  const physicalProps = ['top-left-radius', 'top-right-radius', 'bottom-right-radius', 'bottom-left-radius'];
+  const directionProps = [
     '',
     'top',
     'right',
@@ -445,52 +456,53 @@ export const border = (layer) => {
     'block-end'
   ];
 
+  // Iterate through rules
   layer.walkRules((rule) => {
-    // Phase 1: Merge border width + style + color
-    DIRECTIONS.forEach((dir) => {
+    // Merge border width + style + color
+    directionProps.forEach((dir) => {
       const prefix = dir ? `border-${dir}` : 'border';
       const decls = {};
       const toRemove = [];
 
       rule.walkDecls(new RegExp(`^${prefix}-(width|style|color)$`), (decl) => {
         const key = decl.prop.replace(`${prefix}-`, '');
-        if (BASE_PROPS.includes(key)) {
+        if (borderProps.includes(key)) {
           decls[key] = decl;
           toRemove.push(decl);
         }
       });
 
-      if (BASE_PROPS.every((p) => decls[p])) {
+      if (borderProps.every((p) => decls[p])) {
         const value = `${decls.width.value} ${decls.style.value} ${decls.color.value}`;
         decls.color.cloneBefore({ prop: prefix, value });
         toRemove.forEach((d) => d.remove());
       }
     });
 
-    // Phase 2: Merge border-image
+    // Merge border-image
     const imageDecls = {};
     const toRemoveImage = [];
 
     rule.walkDecls(/^border-image-(source|slice|width|outset|repeat)$/, (decl) => {
       const subProp = decl.prop.replace('border-image-', '');
-      if (IMAGE_PROPS.includes(subProp)) {
+      if (imageProps.includes(subProp)) {
         imageDecls[subProp] = decl;
         toRemoveImage.push(decl);
       }
     });
 
     if (Object.keys(imageDecls).length >= 2) {
-      const ordered = IMAGE_PROPS.map((key) => imageDecls[key]?.value).filter(Boolean);
+      const ordered = imageProps.map((key) => imageDecls[key]?.value).filter(Boolean);
       const value = ordered.join(' ');
       toRemoveImage.at(-1).cloneBefore({ prop: 'border-image', value });
       toRemoveImage.forEach((d) => d.remove());
     }
 
-    // Phase 3: Merge physical border-radius only
+    // Merge physical border-radius
     const radiusDecls = [];
     rule.walkDecls(/^border-(top|bottom)-(left|right)-radius$/, (decl) => {
       const logicalName = decl.prop.replace('border-', '');
-      if (PHYSICAL_RADIUS_PROPS.includes(logicalName)) {
+      if (physicalProps.includes(logicalName)) {
         radiusDecls.push(decl);
       }
     });
@@ -506,38 +518,48 @@ export const border = (layer) => {
 };
 
 /**
- * Optimizes and fuses outline-related declarations into shorthand.
+ * Optimizes and fuses `outline-*` declarations into shorthand.
  *
  * @param {Node} layer The PostCSS layer to process.
  *
  * @returns {void}
  */
 export const outline = (layer) => {
-  const PROPS = ['width', 'style', 'color'];
+  const outlineProps = ['width', 'style', 'color'];
 
+  // Iterate through rules
   layer.walkRules((rule) => {
     const decls = {};
     const toRemove = [];
 
+    // Iterate through outline declarations
     rule.walkDecls(/^outline-(width|style|color)$/, (decl) => {
       const key = decl.prop.replace('outline-', '');
-      if (PROPS.includes(key)) {
+      if (outlineProps.includes(key)) {
         decls[key] = decl;
         toRemove.push(decl);
       }
     });
 
-    const found = PROPS.filter((p) => decls[p]);
-    if (found.length >= 2) {
-      const value = found.map((p) => decls[p].value).join(' ');
-      decls[found.at(-1)].cloneBefore({ prop: 'outline', value });
-      toRemove.forEach((d) => d.remove());
-    }
+    // Ensure minimum required properties for valid shorthand
+    const found = outlineProps.filter((p) => decls[p]);
+    if (found.length < 2) return;
+
+    // Insert shorthand before last declaration
+    const value = found.map((p) => decls[p].value).join(' ');
+    decls[found.at(-1)].cloneBefore({ prop: 'outline', value });
+    toRemove.forEach((d) => d.remove());
   });
 };
 
 /**
  * Sorts all declarations in a layer using the given order style.
+ *
+ * The sorting logic is original, but the reference property orders for
+ * 'alphabetical', 'smacss', and 'concentric' are derived from the
+ * `css-declaration-sorter` project by Siilwyn (ISC License).
+ *
+ * https://github.com/Siilwyn/css-declaration-sorter
  *
  * @param {Node}   layer The PostCSS layer to process.
  * @param {string} style The ordering style: 'frakto', 'smacss', 'concentric-css', or 'alphabetical'
@@ -545,14 +567,15 @@ export const outline = (layer) => {
  * @returns {Promise<void>}
  */
 export const sortDeclarations = (layer, style) => {
-  const ORDER_MAP = {
+  const orderMap = {
     frakto: fraktoOrder,
     smacss: smacssOrder,
     concentric: concentricOrder,
     alphabetical: alphabeticalOrder
   };
-  const orderList = ORDER_MAP[style] || fraktoOrder;
+  const orderList = orderMap[style] || fraktoOrder;
 
+  // Iterate through rules
   layer.walkRules((rule) => {
     const decls = [];
     const others = [];

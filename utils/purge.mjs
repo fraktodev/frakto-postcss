@@ -17,29 +17,25 @@ export const resolveSource = (includePaths, excludePaths, sourceFiles) => {
   let rawContent = '';
 
   const validExtensions = ['html', 'astro', 'jsx', 'tsx'];
-
   const inputExtensions = Array.isArray(sourceFiles) ? sourceFiles : [sourceFiles];
   const normalizedExtensions = [];
   const invalidExtensions = [];
+  const warnIgnore =
+    pc.bold(pc.yellow('FraktoPostCSS: ')) +
+    pc.yellow('The following extensions are not valid and will be ignored:\n') +
+    invalidExtensions.map((e) => pc.bold(pc.yellow(`  - ${e}`))).join('\n');
 
+  // Clean and classify each extension
   for (const extRaw of inputExtensions) {
     if (typeof extRaw !== 'string') continue;
 
     const ext = extRaw.trim().replace(/^\./, '');
-    if (validExtensions.includes(ext)) {
-      normalizedExtensions.push(`.${ext}`);
-    } else {
-      invalidExtensions.push(`.${ext}`);
-    }
+    if (validExtensions.includes(ext)) normalizedExtensions.push(`.${ext}`);
+    else invalidExtensions.push(`.${ext}`);
   }
 
-  if (invalidExtensions.length > 0) {
-    console.warn(
-      pc.bold(pc.yellow('[frakto-postcss]:')) +
-        pc.yellow(' The following extensions are not valid and will be ignored:\n') +
-        invalidExtensions.map((e) => pc.yellow(`  - ${e}`)).join('\n')
-    );
-  }
+  // Display warning if there are invalid extensions
+  if (invalidExtensions.length > 0) console.warn(warnIgnore);
 
   const includes = Array.isArray(includePaths) ? includePaths : [includePaths];
   const excludes = Array.isArray(excludePaths) ? excludePaths : [excludePaths];
@@ -47,6 +43,7 @@ export const resolveSource = (includePaths, excludePaths, sourceFiles) => {
   const isValidExtension = (filePath) => normalizedExtensions.includes(path.extname(filePath));
   const shouldExclude = (relPath) => excludes.some((excluded) => relPath.split(path.sep).includes(excluded));
 
+  // Recursive file walker: reads content of valid files, skipping excluded paths
   const walk = (dir) => {
     let collected = [];
 
@@ -55,35 +52,33 @@ export const resolveSource = (includePaths, excludePaths, sourceFiles) => {
       const relPath = path.relative(process.cwd(), fullPath);
 
       if (shouldExclude(relPath)) continue;
-
-      if (fs.statSync(fullPath).isDirectory()) {
-        collected = collected.concat(walk(fullPath));
-      } else if (isValidExtension(fullPath)) {
-        collected.push(fs.readFileSync(fullPath, 'utf8'));
-      }
+      if (fs.statSync(fullPath).isDirectory()) collected = collected.concat(walk(fullPath));
+      else if (isValidExtension(fullPath)) collected.push(fs.readFileSync(fullPath, 'utf8'));
     }
 
     return collected;
   };
 
+  // Traverse all include paths and accumulate their contents
   for (const includePath of includes) {
     const baseDir = path.resolve(process.cwd(), includePath);
+    const warnNoPath =
+      pc.bold(pc.yellow('FraktoPostCSS: ')) +
+      pc.yellow('Include path does not exist: ') +
+      pc.bold(pc.yellow(includePath));
 
-    if (fs.existsSync(baseDir)) {
-      rawContent += walk(baseDir).join('\n');
-    } else {
-      console.warn(
-        pc.bold(pc.yellow('[frakto-postcss] ')) +
-          pc.yellow('Include path does not exist: ') +
-          pc.bold(pc.yellow(includePath))
-      );
-    }
+    if (fs.existsSync(baseDir)) rawContent += walk(baseDir).join('\n');
+    else console.warn(warnNoPath);
   }
 
+  // Final fallback: if no content was collected, warn the user
   if (!rawContent.trim()) {
-    console.warn(
-      `${pc.bold(pc.yellow('[frakto-postcss]'))} ${pc.yellow('No source files matched the given patterns.')}`
-    );
+    const warnNoFound =
+      pc.bold(pc.yellow('FraktoPostCSS: ')) +
+      pc.yellow('No source files were found matching the specified patterns. ') +
+      pc.yellow('Please verify that the paths or glob patterns provided are correct.');
+
+    console.warn(warnNoFound);
   }
 
   return rawContent;
@@ -98,16 +93,14 @@ export const resolveSource = (includePaths, excludePaths, sourceFiles) => {
  * @returns {string[]}
  */
 export const getTags = (content) => {
-  if (typeof content !== 'string') {
-    return [];
-  }
+  if (typeof content !== 'string') return [];
 
   const tagRegex = /<([a-zA-Z][a-zA-Z0-9-]*)\b[^>]*>/g;
-  const tags = new Set();
+  const tags = [];
+  const matches = [...content.matchAll(tagRegex)];
 
-  let match;
-  while ((match = tagRegex.exec(content)) !== null) {
-    tags.add(match[1].toLowerCase());
+  for (const match of matches) {
+    tags.push(match[1].toLowerCase());
   }
 
   return [...tags];
@@ -122,17 +115,15 @@ export const getTags = (content) => {
  * @returns {string[]}
  */
 export const getIds = (content) => {
-  if (typeof content !== 'string') {
-    return [];
-  }
+  if (typeof content !== 'string') return [];
 
   const idRegex = /\bid\s*=\s*["']([^"']+)["']/gi;
   const matches = [...content.matchAll(idRegex)];
-  const ids = new Set();
+  const ids = [];
 
   for (const match of matches) {
     match[1].split(/\s+/).forEach((id) => {
-      if (id.trim()) ids.add(`#${id.trim()}`);
+      if (id.trim()) ids.push(`#${id.trim()}`);
     });
   }
 
@@ -148,17 +139,15 @@ export const getIds = (content) => {
  * @returns {string[]}
  */
 export const getClasses = (content) => {
-  if (typeof content !== 'string') {
-    return [];
-  }
+  if (typeof content !== 'string') return [];
 
   const classRegex = /\b(?:class|className)\s*=\s*["']([^"']+)["']/gi;
   const matches = [...content.matchAll(classRegex)];
-  const classes = new Set();
+  const classes = [];
 
   for (const match of matches) {
     match[1].split(/\s+/).forEach((cls) => {
-      if (cls.trim()) classes.add(`.${cls.trim()}`);
+      if (cls.trim()) classes.push(`.${cls.trim()}`);
     });
   }
 
@@ -191,7 +180,7 @@ export const charsets = (node) => {
  */
 export const nodes = (layer, whiteList) => {
   const globalWhiteList = [':root', '*', 'html', 'body'];
-  const mergedWhiteList = [...new Set([...whiteList, ...globalWhiteList])];
+  const mergedWhiteList = [...whiteList, ...globalWhiteList];
   const typesToCheck = ['tag', 'id', 'class', 'universal'];
 
   // Normalize selector to match against whitelist format
@@ -203,13 +192,15 @@ export const nodes = (layer, whiteList) => {
   };
 
   // Check if a selector (string or RegExp) is in the whitelist
-  const isWhitelisted = (type, value) =>
-    mergedWhiteList.some((safe) => {
-      const prefixedValue = normalizeSelector(type, value);
-      return typeof safe === 'string'
-        ? safe === prefixedValue
-        : safe instanceof RegExp && safe.test(prefixedValue);
-    });
+  const isWhitelisted = (type, value) => {
+    const prefixedValue = normalizeSelector(type, value);
+    for (let i = 0; i < mergedWhiteList.length; i++) {
+      const safe = mergedWhiteList[i];
+      if (typeof safe === 'string' && safe === prefixedValue) return true;
+      if (safe instanceof RegExp && safe.test(prefixedValue)) return true;
+    }
+    return false;
+  };
 
   // Recursively validate a selector by walking its nodes
   const validateSelector = (selector) => {
@@ -217,33 +208,23 @@ export const nodes = (layer, whiteList) => {
 
     selector.walk((node) => {
       // Skip >, +, ~, etc.
-      if (node.type === 'combinator') {
-        return;
-      }
+      if (node.type === 'combinator') return;
 
       // Handle pseudo selectors with nested sub-selectors (e.g., :is(), :not())
       if (node.type === 'pseudo' && Array.isArray(node.nodes) && node.nodes.length > 0) {
         const subSelectors = node.nodes.filter((n) => n.type === 'selector');
         const anyValid = subSelectors.some((subSelector) => validateSelector(subSelector));
 
-        if (anyValid) {
-          isValid = true;
-        } else {
-          isValid = false;
-        }
-
+        if (anyValid) isValid = true;
+        else isValid = false;
         return false;
       }
 
       // Skip non-nested pseudo classes like :hover, :first-child, etc.
-      if (node.type === 'pseudo') {
-        return;
-      }
+      if (node.type === 'pseudo') return;
 
       // Validate tag, id, class, universal
-      if (typesToCheck.includes(node.type)) {
-        isValid = isWhitelisted(node.type, node.value);
-      }
+      if (typesToCheck.includes(node.type)) isValid = isWhitelisted(node.type, node.value);
     });
 
     return isValid;
@@ -252,31 +233,26 @@ export const nodes = (layer, whiteList) => {
   // Walk through each CSS rule inside the layer
   layer.walkRules((rule) => {
     if (!rule.selector) return;
-
     const keepSelectors = [];
 
     try {
       // Parse complex selector and check each part individually
       selectorParser((selectors) => {
         selectors.each((selector) => {
-          if (validateSelector(selector)) {
-            // Normalize and remove leading/trailing whitespace
-            keepSelectors.push(selector.toString().trim());
-          }
+          // Normalize and remove leading/trailing whitespace
+          if (validateSelector(selector)) keepSelectors.push(selector.toString().trim());
         });
       }).processSync(rule.selector);
 
       // If none of the selectors are valid, remove the rule entirely
-      if (keepSelectors.length === 0) {
-        rule.remove();
-      } else {
-        rule.selector = keepSelectors.join(', ');
-      }
+      if (keepSelectors.length === 0) rule.remove();
+      else rule.selector = keepSelectors.join(', ');
     } catch (error) {
-      console.warn(
-        pc.bold(pc.yellow('[frakto-postcss]: ')) + pc.yellow(`Error purging selector: ${rule.selector}`),
-        error
-      );
+      const warnPurge =
+        pc.bold(pc.yellow('FraktoPostCSS: ')) +
+        pc.yellow(`Error purging selector: ${rule.selector} \n`) +
+        pc.yellow(error);
+      console.warn(warnPurge);
     }
   });
 };
