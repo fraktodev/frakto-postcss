@@ -20,24 +20,24 @@ const fraktoPostCSS = (ctx = {}, mode = process.env.NODE_ENV || 'production') =>
   return {
     postcssPlugin: 'frakto-postcss',
     Once(root) {
-      let source, tagWhiteList, idWhiteList, classWhiteList;
-      const layersToReinsert = [];
-      const layersPrinted = [];
+      let source, whiteList;
       const layers = format.getLayers(root);
-      const orphansLayer = format.getOrphansLayer(root, opts.orphansLayerName, opts.minify);
+      const layersToReinsert = [];
+      const layersToOrder = [];
+      const orphansLayer = format.getOrphansLayer(root, opts.layers.orphansName, opts.minify);
 
-      // Purge
-      purge.comments(root, opts.removeComments, opts.minify);
+      // Optimize
+      optimize.comments(root, opts.optimize.comments, opts.minify);
 
       // Insert charset at the top of the root
-      if (opts.addCharset) {
+      if (opts.optimize.charset) {
         purge.charsets(root);
         root.prepend(format.getRootCharset(root));
       }
 
       // Insert orphan layer into layer map if it exists
       if (orphansLayer) {
-        layers.set(opts.orphansLayerName, [orphansLayer]);
+        layers.set(opts.layers.orphansName, [orphansLayer]);
       }
 
       // Exit early if layers are not iterable
@@ -45,39 +45,52 @@ const fraktoPostCSS = (ctx = {}, mode = process.env.NODE_ENV || 'production') =>
         return;
       }
 
-      // Only resolve if purging is enabled
-      if (opts.purge === true) {
-        source = purge.resolveSource(opts.includePaths, opts.excludePaths, opts.files);
-        tagWhiteList = [...purge.getTags(source), ...opts.tagSafeList];
-        idWhiteList = [...purge.getIds(source), ...opts.idSafeList];
-        classWhiteList = [...purge.getClasses(source), ...opts.classSafeList];
+      // Resolve for purge
+      if (opts.purge.enabled) {
+        source = purge.resolveSource(
+          opts.purge.includePaths,
+          opts.purge.excludePaths,
+          opts.purge.sourceFiles
+        );
+        whiteList = [
+          ...purge.getTags(source),
+          ...purge.getIds(source),
+          ...purge.getClasses(source),
+          ...opts.purge.safeList
+        ];
       }
 
       // Iterate through each layer group and apply transformations
       layers.forEach((layerData, layerName) => {
         layerData.forEach((layer) => {
           // Purge
-          purge.comments(layer, opts.removeComments, opts.minify);
           purge.charsets(layer);
-          if (opts.purge && !['theme', 'reset'].includes(layerName)) {
-            purge.nodes(layer, tagWhiteList, idWhiteList, classWhiteList);
+          if (opts.purge.enabled && !['theme', 'reset'].includes(layerName)) {
+            purge.nodes(layer, whiteList);
           }
 
           // Optimize
-          optimize.mediaQueries(layer);
-          //optimize.quotes(layer);
-          optimize.background(layer);
+          const optimizeSteps = {
+            comments: (layer) => optimize.comments(layer, opts.optimize.comments, opts.minify),
+            mediaQueries: (layer) => optimize.mediaQueries(layer),
+            background: (layer) => optimize.background(layer)
+          };
+          Object.entries(optimizeSteps).forEach(([key, fn]) => {
+            if (opts.optimize[key]) {
+              fn(layer);
+            }
+          });
 
           // Append layers to maps.
           if (layer.nodes && layer.nodes.length > 0) {
-            layersPrinted.push(layerName);
+            layersToOrder.push(layerName);
             layersToReinsert.push(layer);
           }
         });
       });
 
       // Insert order layer into nodesToReinsert map.
-      const orderLayer = format.getOrderLayer(layersPrinted, opts.layersOrder);
+      const orderLayer = format.getOrderLayer(layersToOrder, opts.layers.order);
       if (orderLayer) {
         layersToReinsert.unshift(orderLayer);
       }

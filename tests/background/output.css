@@ -1,4 +1,4 @@
-@layer orphans {
+@layer root {
 	/* Should convert to: background-position: 0% 0%; */
 	.box1 {
 		background-position: 0% 0%;

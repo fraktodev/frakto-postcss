@@ -4,7 +4,7 @@
 */
 
 /*! Should not remove */
-@layer orphans, test;
+@layer root, test;
 @layer test {
 	.a {
 		color: red;
@@ -14,7 +14,7 @@
 		color: red;
 	}
 }
-@layer orphans {
+@layer root {
 	.a {
 		color: red;
 	}

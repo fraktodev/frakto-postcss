@@ -1,4 +1,3 @@
-@charset "UTF-8";
 @layer medias {
 	@media (min-height: 500px) {
 		.tall {

@@ -1,9 +1,0 @@
-{
-  "options": {
-    "addCharset": true,
-    "minify": false,
-    "purge": false,
-    "orphansLayerName": "medias",
-    "layersOrder": ["medias"]
-  }
-}

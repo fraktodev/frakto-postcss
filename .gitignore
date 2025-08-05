@@ -4,6 +4,7 @@
 # System config
 **/.local
 **/.DS_Store
+.prettierignore
 
 # Build control files
 **/package-lock.json

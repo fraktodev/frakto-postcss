@@ -27,13 +27,42 @@ Originally designed to empower the **Frakto UI** framework, it's fully compatibl
 
 ## Table of Contents
 
+- [What does this plugin do?](#what-does-this-plugin-do)
 - [Installation](#installation)
-- [Configuration Options](#configuration-options)
+- [Options](#options)
 - [Usage](#usage)
-- [Expected Output](#expected-output)
-- [Purge Mode](#purge-mode)
 - [Contributing](#contributing)
 - [License](#license)
+
+## What does this plugin do?
+
+`@frakto/postcss` is an all-in-one PostCSS plugin crafted for modular, optimized, and production-ready CSS. It gives you full control over your styles, removing the clutter and enforcing structure and consistency.
+
+### Main Features
+
+#### Minification
+
+Removes unnecessary whitespace, units, and redundant syntax to generate compact output.
+
+#### Optimization
+
+A set of optional, fine-grained improvements:
+
+- Groups and sorts media queries by type and specificity (`min-width` → `max-width` → combined min/max → prefers-\* → print, etc.)
+- Merges background declarations into a shorthand (`background-color`, `background-image`, `background-repeat`, `background-position`)
+- Simplifies values like `repeat no-repeat` → `repeat-x`, and `left top` → `0% 0%`
+- Removes comments intelligently based on your configuration
+
+#### Purge
+
+Removes unused selectors by scanning your source files and comparing against a safe list (supports literal values and regular expressions)
+
+#### Layering
+
+Automatically groups all CSS rules into `@layer` blocks (e.g. `theme`, `reset`, `base`, etc.) and adds a layer order rule at the top to enforce cascade precedence.
+
+- Rules outside any layer are moved to a default orphan layer (configurable)
+- A `@layer reset, base, layout...` declaration is injected to maintain correct order
 
 ## Installation
 
@@ -49,73 +78,78 @@ Frakto PostCSS is designed to work with PostCSS v8 or higher. Please make sure P
 npm install postcss --save-dev
 ```
 
-## Configuration Options
+## Options
 
-`frakto-postcss` provides several configuration options to customize its behavior. You can pass them via plugin options or by creating a `frakto.config.mjs` file in your project root.
+`@frakto/postcss` provides several configuration options to customize its behavior. You can pass them via plugin options or by creating a `frakto.config.mjs` file in your project root.
 
 If a config file is present, inline plugin options will be ignored.
 
 ### Available Options
 
-| Option             | Type               | Default      | Description                                                                                                                                                                                                                                                |
-| ------------------ | ------------------ | ------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `removeComments`   | `string`           | `'non-bang'` | Controls comment removal behavior. Possible values: `'none'` (preserve all comments), `'non-bang'` (remove all except comments starting with `/*!`), `'all'` (remove everything). If set to `'none'` and `minify` is `true`, `'non-bang'` is used instead. |
-| `addCharset`       | `boolean`          | `true`       | Ensures the output CSS starts with a `@charset "UTF-8"` declaration. Only added if not already present.                                                                                                                                                    |
-| `minify`           | `boolean`          | `true`       | Enables internal CSS minification (e.g., whitespace trimming, zero units, simplified values) during build mode.                                                                                                                                            |
-| `purge`            | `boolean`          | `true`       | Enables purging of unused CSS classes and tags.                                                                                                                                                                                                            |
-| `tagSafeList`      | `string[]`         | `[]`         | List of tag names to preserve during purging.                                                                                                                                                                                                              |
-| `classSafeList`    | `string[]`         | `[]`         | List of class names to preserve during purging. Supports both literal strings and RegExp patterns. For example: `['btn-primary', /^m[trblxy]?-?\d$/]` will preserve `.btn-primary`, `.mt-1`, `.mx-4`, etc.                                                 |
-| `includePaths`     | `string\|string[]` | `'.'`        | Folders (relative to `process.cwd()`) to scan for source files.                                                                                                                                                                                            |
-| `excludePaths`     | `string\|string[]` | See below    | Folders to exclude during scanning.                                                                                                                                                                                                                        |
-| `files`            | `string\|string[]` | `['html']`   | File extensions (without dot) to include in the scan. Only the following extensions are valid: `html`, `astro`, `jsx`, `tsx`. Invalid ones will be ignored with a warning.                                                                                 |
-| `orphansLayerName` | `string`           | `'orphans'`  | Name of the layer used to group orphaned CSS rules.                                                                                                                                                                                                        |
-| `layersOrder`      | `string[]`         | See below    | Custom order in which CSS layers will be printed.                                                                                                                                                                                                          |
+#### Top-level Options
 
-#### Default `excludePaths`
+| Option     | Type                | Default | Description                                                                                   |
+| ---------- | ------------------- | ------- | --------------------------------------------------------------------------------------------- |
+| `minify`   | `boolean`           | `true`  | Enables internal CSS minification: trims whitespace, simplifies values, removes units, etc.   |
+| `optimize` | `boolean`\|`object` | `true`  | Enables structural optimizations. Set to `true` for defaults, or pass an object to customize. |
+| `purge`    | `boolean`\|`object` | `true`  | Enables purging of unused selectors. Set to `true` for defaults, or customize with an object. |
+| `layers`   | `object`            | `{}`    | Handles CSS layer order and orphan grouping.                                                  |
+
+#### optimize Options
+
+| Option         | Type                            | Default      | Description                                                                                                                                                                                                       |
+| -------------- | ------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `comments`     | `'none'`\|`'non-bang'`\|`'all'` | `'non-bang'` | Controls comment removal:<br>• `'none'`: preserve all<br>• `'non-bang'`: remove all except `/*!`<br>• `'all'`: remove all comments <br>• If set to `'none'` and `minify` is `true`, `'non-bang'` is used instead. |
+| `charset`      | `boolean`                       | `true`       | Inserts `@charset "UTF-8"` at the top of the CSS, if not already present.                                                                                                                                         |
+| `mediaQueries` | `boolean`                       | `true`       | Groups and sorts `@media` rules by type and specificity (e.g. `min-width`, `max-width`, `prefers-*`, `print`, etc.). Queries with identical parameters are merged.                                                |
+| `background`   | `boolean`                       | `true`       | Merges and simplifies related `background-*` declarations (e.g. `background-repeat`, `background-position`) into a single shorthand.                                                                              |
+
+#### purge Options
+
+| Option         | Type                 | Default     | Description                                                                                           |
+| -------------- | -------------------- | ----------- | ----------------------------------------------------------------------------------------------------- |
+| `safeList`     | `(string\|RegExp)[]` | (see below) | Selectors to keep (e.g. `.title`, `#main`, `/\.combo-\d+/`). Accepts class, ID, or tag (with prefix). |
+| `includePaths` | `string[]`           | (see below) | Folders to scan for source files (relative to `process.cwd()`).                                       |
+| `excludePaths` | `string[]`           | (see below) | Folders to ignore: `.git`, `node_modules`, `.next`, `test`, etc.                                      |
+| `files`        | `string[]`           | (see below) | File types to scan: `html`, `astro`, `jsx`, `tsx`. Others will be ignored with a warning.             |
+
+#### layers Options
+
+| Option        | Type       | Default     | Description                                                  |
+| ------------- | ---------- | ----------- | ------------------------------------------------------------ |
+| `order`       | `string[]` | (see below) | Defines the print order for CSS layers.                      |
+| `orphansName` | `string`   | (see below) | Name of the layer for CSS rules not wrapped in any `@layer`. |
+
+#### Default purge Options
 
 ```js
-[
-  '.git',
-  '.tmp',
-  '.next',
-  '.cache',
-  '.turbo',
-  '.vercel',
-  '.vscode',
-  '.ds_store',
-  'tmp',
-  'test',
-  'tests',
-  'vendor',
-  'node_modules'
-];
+{
+  safeList: [],
+  includePaths: ['.'],
+  excludePaths: ['.git', '.vscode', 'tmp', 'test', 'tests', 'vendor', 'node_modules'],
+  sourceFiles: ['html', 'astro', 'jsx', 'tsx']
+}
 ```
 
-#### Default `layersOrder`
+#### Default layers Options
 
 ```js
-[
-  'theme',
-  'reset',
-  'base',
-  'layout.containers',
-  'layout.grid',
-  'layout.flex',
-  'layout.shortcuts',
-  'shortcuts',
-  'orphans'
-];
+{
+  orphansName: 'root',
+  order: ['theme', 'reset', 'base', 'root']
+}
 ```
 
 You can override this order to suit your project's structure.
 
 ## Usage
 
-Frakto PostCSS is a drop-in PostCSS plugin. Once installed and configured, you can integrate it into any PostCSS processing pipeline.
+Frakto PostCSS is a modern PostCSS plugin built entirely on **ES Modules**. It integrates into any PostCSS pipeline using `.mjs` files or a `"type": "module"` setup.
 
-### Basic Example (ESM)
+### Basic Usage (ESM)
 
 ```js
+// postcss-runner.mjs
 import postcss from 'postcss';
 import fraktoPostCSS from '@frakto/postcss';
 
@@ -123,142 +157,53 @@ const css = `/* your CSS content */`;
 
 const result = await postcss([
   fraktoPostCSS({
+    minify: false
     purge: true,
-    includePaths: 'src',
-    excludePaths: ['node_modules'],
-    files: ['html', 'astro']
+    optimize: true,
   })
 ]).process(css);
 
 console.log(result.css);
 ```
 
-### CommonJS Example
+### Auto-loading config from `frakto.config.mjs`
+
+Frakto can load options automatically from a config file in your project root.
+
+#### Example: `frakto.config.mjs`
 
 ```js
-const postcss = require('postcss');
-const fraktoPostCSS = require('@frakto/postcss');
-
-const css = `/* your CSS content */`;
-
-postcss([
-  fraktoPostCSS({
-    purge: true,
-    includePaths: 'src',
-    excludePaths: ['node_modules'],
-    files: ['html', 'astro']
-  })
-])
-  .process(css)
-  .then((result) => {
-    console.log(result.css);
-  });
-```
-
-### Using frakto.config.mjs
-
-Frakto PostCSS can auto-load settings from a `frakto.config.mjs` file. When this file is present, options passed directly to the plugin will be ignored.
-
-```js
-// frakto.config.mjs
 export default {
+  minify: false
   purge: true,
-  includePaths: ['src'],
-  excludePaths: ['node_modules'],
-  files: ['html', 'astro']
+  optimize: true,
 };
 ```
 
-Then in your PostCSS setup:
+If this file is present, any options passed directly to the plugin will be **ignored**.
 
-#### Example: `postcss.config.mjs`
+### In your `postcss.config.mjs`
 
 ```js
 import fraktoPostCSS from '@frakto/postcss';
 
 export default {
-  plugins: [fraktoPostCSS()]
+  plugins: [fraktoPostCSS({
+    minify: false
+    purge: true,
+    optimize: true,
+  })]
 };
 ```
 
-For more control, see the [Configuration Options](#configuration-options) section.
+### Important
 
-## Expected Output
+This plugin **only works with ESM**. Make sure you:
 
-Given the following input:
+- Use `.mjs` files
+- Or set `"type": "module"` in your `package.json`
 
-```css
-@layer reset {
-  * {
-    margin: 0;
-    padding: 0;
-  }
-}
-
-@layer base {
-  h1 {
-    font-size: 2rem;
-  }
-}
-
-.btn {
-  padding: 1rem;
-  background: blue;
-}
-```
-
-After processing with `frakto-postcss`, the output will be:
-
-```css
-@layer reset, base, shortcuts;
-@layer reset {
-  * {
-    margin: 0;
-    padding: 0;
-  }
-}
-@layer base {
-  h1 {
-    font-size: 2rem;
-  }
-}
-@layer shortcuts {
-  .btn {
-    padding: 1rem;
-    background: blue;
-  }
-}
-```
-
-Layers are reordered, orphan rules are grouped under a dedicated layer, and formatting is normalized.
-
-## Purge Mode
-
-When `purge` is enabled in your configuration, Frakto PostCSS will analyze your source files (HTML, Astro, JSX, TSX) and remove any unused CSS selectors (tags and classes).
-
-### How it works:
-
-- Parses your files and extracts all HTML tags and values inside `class="..."` attributes.
-- Then, it checks every layer (except `theme` and `reset`) and removes CSS rules that don't match any of the extracted tags or classes.
-
-### Safe lists:
-
-You can define `tagSafeList` and `classSafeList` in your config to prevent specific selectors from being removed, even if they’re not found in your source files.
-
-### Example
-
-```js
-export default {
-  purge: true,
-  tagSafeList: ['a', 'span', 'table'],
-  classSafeList: ['ghost', 'admin-only']
-};
-```
-
-This helps you safely keep utility classes or elements added dynamically by JavaScript or frameworks.
-
-> **Tip:** Use the safe lists to avoid removing styles for modals, dynamic components, or server-rendered templates.  
-> If you're using Frakto UI, most dynamic components are already safe listed internally, so you typically won’t need to handle that manually.
+CommonJS (`require`) is **not supported**.
 
 ## Contributing
 

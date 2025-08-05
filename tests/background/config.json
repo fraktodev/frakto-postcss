@@ -1,8 +1,0 @@
-{
-  "options": {
-    "removeComments": "none",
-    "addCharset": false,
-    "minify": false,
-    "purge": false
-  }
-}

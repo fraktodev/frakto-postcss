@@ -11,14 +11,14 @@ import selectorParser from 'postcss-selector-parser';
  * @param {string|string[]} excludePaths - Relative directories to skip (e.g., `node_modules`, `.git`).
  * @param {string|string[]} extensions   - List of file extensions to include (without dot, e.g., 'html', 'astro').
  *
- * @returns {string}
+ * @returns {string|undefined}
  */
-export const resolveSource = (includePaths, excludePaths, files) => {
+export const resolveSource = (includePaths, excludePaths, sourceFiles) => {
   let rawContent = '';
 
   const validExtensions = ['html', 'astro', 'jsx', 'tsx'];
 
-  const inputExtensions = Array.isArray(files) ? files : [files];
+  const inputExtensions = Array.isArray(sourceFiles) ? sourceFiles : [sourceFiles];
   const normalizedExtensions = [];
   const invalidExtensions = [];
 
@@ -98,7 +98,9 @@ export const resolveSource = (includePaths, excludePaths, files) => {
  * @returns {string[]}
  */
 export const getTags = (content) => {
-  if (typeof content !== 'string') return [];
+  if (typeof content !== 'string') {
+    return [];
+  }
 
   const tagRegex = /<([a-zA-Z][a-zA-Z0-9-]*)\b[^>]*>/g;
   const tags = new Set();
@@ -120,7 +122,9 @@ export const getTags = (content) => {
  * @returns {string[]}
  */
 export const getIds = (content) => {
-  if (typeof content !== 'string') return [];
+  if (typeof content !== 'string') {
+    return [];
+  }
 
   const idRegex = /\bid\s*=\s*["']([^"']+)["']/gi;
   const matches = [...content.matchAll(idRegex)];
@@ -128,7 +132,7 @@ export const getIds = (content) => {
 
   for (const match of matches) {
     match[1].split(/\s+/).forEach((id) => {
-      if (id.trim()) ids.add(id.trim());
+      if (id.trim()) ids.add(`#${id.trim()}`);
     });
   }
 
@@ -144,7 +148,9 @@ export const getIds = (content) => {
  * @returns {string[]}
  */
 export const getClasses = (content) => {
-  if (typeof content !== 'string') return [];
+  if (typeof content !== 'string') {
+    return [];
+  }
 
   const classRegex = /\b(?:class|className)\s*=\s*["']([^"']+)["']/gi;
   const matches = [...content.matchAll(classRegex)];
@@ -152,44 +158,11 @@ export const getClasses = (content) => {
 
   for (const match of matches) {
     match[1].split(/\s+/).forEach((cls) => {
-      if (cls.trim()) classes.add(cls.trim());
+      if (cls.trim()) classes.add(`.${cls.trim()}`);
     });
   }
 
   return [...classes];
-};
-
-/**
- * Optimizes comments based on plugin options.
- *
- * @param {Object}  node           The PostCSS root or node containing CSS rules.
- * @param {string}  removeComments The remove comments option. Accepts 'all', 'non-bang', or 'none'.
- * @param {boolean} minify         The minify option. If true, it may affect comment removal behavior.
- *
- * @returns {void}
- */
-export const comments = (node, removeComments, minify) => {
-  let shouldRun = false;
-  let preserveImportant = false;
-
-  if (removeComments === 'all') {
-    shouldRun = true;
-    preserveImportant = false;
-  } else if (removeComments === 'non-bang') {
-    shouldRun = true;
-    preserveImportant = true;
-  } else if (removeComments === 'none' && minify === true) {
-    shouldRun = true;
-    preserveImportant = true;
-  }
-
-  if (!shouldRun) return;
-
-  node.walkComments((comment) => {
-    const isImportant = comment.text.trim().startsWith('!');
-    if (preserveImportant && isImportant) return;
-    comment.remove();
-  });
 };
 
 /**
@@ -211,64 +184,89 @@ export const charsets = (node) => {
  * Iterates over all rule selectors and validates tags, classes, and universal selectors
  * against their respective safe lists. Invalid selectors are removed from the rule or discarded entirely.
  *
- * @param {Node}              layer           The PostCSS layer containing CSS rules.
- * @param {string[]}          tagWhiteList    Tags that are allowed to remain during purging.
- * @param {(string|RegExp)[]} idWhiteList     Ids or patterns allowed during purging.
- * @param {(string|RegExp)[]} classWhiteList  Classes or patterns allowed during purging.
+ * @param {Node}              layer      The PostCSS layer containing CSS rules
+ * @param {(string|RegExp)[]} whiteList  Tags, ids, classes or patterns allowed during purging.
  *
  * @returns {void}
  */
-export const nodes = (layer, tagWhiteList, idWhiteList, classWhiteList) => {
+export const nodes = (layer, whiteList) => {
   const globalWhiteList = [':root', '*', 'html', 'body'];
+  const mergedWhiteList = [...new Set([...whiteList, ...globalWhiteList])];
+  const typesToCheck = ['tag', 'id', 'class', 'universal'];
 
+  // Normalize selector to match against whitelist format
+  const normalizeSelector = (type, value) => {
+    if (type === 'class') return `.${value}`;
+    if (type === 'id') return `#${value}`;
+    if (type === 'universal') return '*';
+    return value;
+  };
+
+  // Check if a selector (string or RegExp) is in the whitelist
+  const isWhitelisted = (type, value) =>
+    mergedWhiteList.some((safe) => {
+      const prefixedValue = normalizeSelector(type, value);
+      return typeof safe === 'string'
+        ? safe === prefixedValue
+        : safe instanceof RegExp && safe.test(prefixedValue);
+    });
+
+  // Recursively validate a selector by walking its nodes
+  const validateSelector = (selector) => {
+    let isValid = false;
+
+    selector.walk((node) => {
+      // Skip >, +, ~, etc.
+      if (node.type === 'combinator') {
+        return;
+      }
+
+      // Handle pseudo selectors with nested sub-selectors (e.g., :is(), :not())
+      if (node.type === 'pseudo' && Array.isArray(node.nodes) && node.nodes.length > 0) {
+        const subSelectors = node.nodes.filter((n) => n.type === 'selector');
+        const anyValid = subSelectors.some((subSelector) => validateSelector(subSelector));
+
+        if (anyValid) {
+          isValid = true;
+        } else {
+          isValid = false;
+        }
+
+        return false;
+      }
+
+      // Skip non-nested pseudo classes like :hover, :first-child, etc.
+      if (node.type === 'pseudo') {
+        return;
+      }
+
+      // Validate tag, id, class, universal
+      if (typesToCheck.includes(node.type)) {
+        isValid = isWhitelisted(node.type, node.value);
+      }
+    });
+
+    return isValid;
+  };
+
+  // Walk through each CSS rule inside the layer
   layer.walkRules((rule) => {
     if (!rule.selector) return;
 
     const keepSelectors = [];
 
     try {
+      // Parse complex selector and check each part individually
       selectorParser((selectors) => {
         selectors.each((selector) => {
-          let isValid = true;
-
-          selector.walk((node) => {
-            if (node.type === 'tag' && !tagWhiteList.includes(node.value)) {
-              isValid = false;
-            }
-
-            if (
-              node.type === 'id' &&
-              !idWhiteList.some((safe) =>
-                typeof safe === 'string'
-                  ? safe === node.value
-                  : safe instanceof RegExp && safe.test(node.value)
-              )
-            ) {
-              isValid = false;
-            }
-
-            if (
-              node.type === 'class' &&
-              !classWhiteList.some((safe) =>
-                typeof safe === 'string'
-                  ? safe === node.value
-                  : safe instanceof RegExp && safe.test(node.value)
-              )
-            ) {
-              isValid = false;
-            }
-
-            if (node.type === 'universal' && !globalWhiteList.includes(node.value)) {
-              isValid = false;
-            }
-          });
-
-          if (isValid) {
-            keepSelectors.push(selector.toString());
+          if (validateSelector(selector)) {
+            // Normalize and remove leading/trailing whitespace
+            keepSelectors.push(selector.toString().trim());
           }
         });
       }).processSync(rule.selector);
 
+      // If none of the selectors are valid, remove the rule entirely
       if (keepSelectors.length === 0) {
         rule.remove();
       } else {
