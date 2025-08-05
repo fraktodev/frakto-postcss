@@ -1,0 +1,30 @@
+@charset "UTF-8";
+@layer root {
+	/* Should merge into font */
+	.text-basic {
+		font: italic small-caps bold condensed 16px Helvetica, sans-serif;
+		line-height: 1.5;
+	}
+	.text-vars {
+		font: var(--font-style, italic) var(--font-variant, small-caps) var(--font-weight, bold) var(--font-stretch, condensed) var(--font-size, 16px) var(--font-family, Helvetica, sans-serif);
+		line-height: var(--line-height, 1.5);
+	}
+	/* Should not merge: missing font-size */
+	.text-no-size {
+		font-family: Arial, sans-serif;
+		font-style: italic;
+	}
+	/* Should not merge: missing font-family */
+	.text-no-family {
+		font-size: 14px;
+		font-weight: 600;
+	}
+	/* Should merge minimal */
+	.text-minimal {
+		font: 18px Georgia, serif;
+	}
+	/* Should merge with some optional props */
+	.text-partial {
+		font: normal 500 15px Roboto, sans-serif;
+	}
+}

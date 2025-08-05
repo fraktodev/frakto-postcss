@@ -1,0 +1,46 @@
+/* Should merge into font */
+.text-basic {
+	font-family: Helvetica, sans-serif;
+	font-size: 16px;
+	font-weight: bold;
+	font-stretch: condensed;
+	font-style: italic;
+	font-variant: small-caps;
+	line-height: 1.5;
+}
+
+.text-vars {
+	font-family: var(--font-family, Helvetica, sans-serif);
+	font-size: var(--font-size, 16px);
+	font-weight: var(--font-weight, bold);
+	font-stretch: var(--font-stretch, condensed);
+	font-style: var(--font-style, italic);
+	font-variant: var(--font-variant, small-caps);
+	line-height: var(--line-height, 1.5);
+}
+
+/* Should not merge: missing font-size */
+.text-no-size {
+	font-family: Arial, sans-serif;
+	font-style: italic;
+}
+
+/* Should not merge: missing font-family */
+.text-no-family {
+	font-size: 14px;
+	font-weight: 600;
+}
+
+/* Should merge minimal */
+.text-minimal {
+	font-family: Georgia, serif;
+	font-size: 18px;
+}
+
+/* Should merge with some optional props */
+.text-partial {
+	font-family: Roboto, sans-serif;
+	font-size: 15px;
+	font-weight: 500;
+	font-style: normal;
+}

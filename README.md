@@ -8,6 +8,7 @@
   <img src="https://img.shields.io/badge/version-1.0.0--beta.2-blue.svg" alt="Version">
   <img src="https://img.shields.io/badge/npm-%5E10.0.0-blue.svg?logo=npm&logoColor=white" alt="npm">
   <img src="https://img.shields.io/badge/PostCSS-%5E8.0.0-blue.svg?logo=postcss&logoColor=white" alt="PostCSS">
+  <img src="https://img.shields.io/badge/JavaScript-ESM-blue.svg?logo=javascript&logoColor=white" alt="JavaScript ESM">
   <img src="https://img.shields.io/badge/License-MIT-brightgreen.svg" alt="License">
   <img src="https://img.shields.io/badge/build-passing-brightgreen.svg" alt="Build Status">
   <img src="https://img.shields.io/badge/Prs-welcome-brightgreen.svg" alt="Contributions welcome">
@@ -48,10 +49,12 @@ Removes unnecessary whitespace, units, and redundant syntax to generate compact 
 
 A set of optional, fine-grained improvements:
 
-- Groups and sorts media queries by type and specificity (`min-width` → `max-width` → combined min/max → prefers-\* → print, etc.)
+- Removes comments intelligently based on your configuration
+- Groups and sorts media queries by type and specificity (`min-width` → `max-width` → combined `min`/`max` → `prefers-*` → `print`, etc.)
 - Merges background declarations into a shorthand (`background-color`, `background-image`, `background-repeat`, `background-position`)
 - Simplifies values like `repeat no-repeat` → `repeat-x`, and `left top` → `0% 0%`
-- Removes comments intelligently based on your configuration
+- Merges related `border-*` declarations into shorthands (e.g., `border-width`, `border-style`, `border-color`) including directional and logical variants. Also merges `border-image-*` and logical `border-radius` into compact forms
+- Merges multiple `font-*` declarations into a single `font` shorthand when at least two font-related declarations are present
 
 #### Purge
 
@@ -97,12 +100,14 @@ If a config file is present, inline plugin options will be ignored.
 
 #### optimize Options
 
-| Option         | Type                            | Default      | Description                                                                                                                                                                                                       |
-| -------------- | ------------------------------- | ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `comments`     | `'none'`\|`'non-bang'`\|`'all'` | `'non-bang'` | Controls comment removal:<br>• `'none'`: preserve all<br>• `'non-bang'`: remove all except `/*!`<br>• `'all'`: remove all comments <br>• If set to `'none'` and `minify` is `true`, `'non-bang'` is used instead. |
-| `charset`      | `boolean`                       | `true`       | Inserts `@charset "UTF-8"` at the top of the CSS, if not already present.                                                                                                                                         |
-| `mediaQueries` | `boolean`                       | `true`       | Groups and sorts `@media` rules by type and specificity (e.g. `min-width`, `max-width`, `prefers-*`, `print`, etc.). Queries with identical parameters are merged.                                                |
-| `background`   | `boolean`                       | `true`       | Merges and simplifies related `background-*` declarations (e.g. `background-repeat`, `background-position`) into a single shorthand.                                                                              |
+| Option         | Type                            | Default      | Description                                                                                                                                                                                                                                                                                                                                |
+| -------------- | ------------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `comments`     | `'none'`\|`'non-bang'`\|`'all'` | `'non-bang'` | Controls comment removal:<br>• `'none'`: preserve all<br>• `'non-bang'`: remove all except `/*!`<br>• `'all'`: remove all comments <br>• If set to `'none'` and `minify` is `true`, `'non-bang'` is used instead.                                                                                                                          |
+| `charset`      | `boolean`                       | `true`       | Inserts `@charset "UTF-8"` at the top of the CSS, if not already present.                                                                                                                                                                                                                                                                  |
+| `mediaQueries` | `boolean`                       | `true`       | Groups and sorts `@media` rules by type and specificity (e.g. `min-width`, `max-width`, `prefers-*`, `print`, etc.). Queries with identical parameters are merged.                                                                                                                                                                         |
+| `background`   | `boolean`                       | `true`       | Merges and simplifies related `background-*` declarations (e.g. `background-repeat`, `background-position`) into a single shorthand.                                                                                                                                                                                                       |
+| `border`       | `boolean`                       | `true`       | Merges and simplifies related `border-*` declarations (like `border-width`, `border-style`, `border-color`) into a single shorthand. Also supports directional properties (`border-left`, `border-block`, etc.) as long as all three required sub-properties are present. Extensible to handle `border-image` and `border-radius` as well. |
+| `font`         | `boolean`                       | `true`       | Merges and simplifies related `font-*` declarations (`font-family`, `font-size`, `font-weight`, `font-style`, etc.) into a single `font` shorthand. Only applied when at least two font-related declarations are present.                                                                                                                  |
 
 #### purge Options
 

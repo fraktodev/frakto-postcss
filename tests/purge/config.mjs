@@ -3,7 +3,8 @@ export default {
     minify: false,
     optimize: {
       comments: 'non-bang',
-      charset: true
+      charset: true,
+      font: false
     },
     purge: {
       safeList: ['form', /^(a|span)$/, '#not-included', /#main-\d+/, '.not-included', /.combo-\d+/],

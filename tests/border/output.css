@@ -1,0 +1,101 @@
+@charset "UTF-8";
+@layer root {
+	/* Full shorthand candidates */
+	.box1 {
+		border: 1px solid red;
+	}
+	/* Should NOT be merged */
+	.box2 {
+		border-style: dashed;
+		border-color: blue;
+	}
+	.box3 {
+		border-width: 2px;
+		border-color: green;
+	}
+	.box4 {
+		border-width: 3px;
+		border-style: dotted;
+	}
+	.box5 {
+		border-color: purple;
+	}
+	.box6 {
+		border-style: double;
+	}
+	/* Logical properties */
+	.box-logical1 {
+		border-block: 2px solid red;
+	}
+	/* Should NOT be merged */
+	.box-logical2 {
+		border-inline-style: dashed;
+		border-inline-color: orange;
+	}
+	.box-logical3 {
+		border-inline-width: 1px;
+	}
+	/* Directional: top, right, bottom, left (must be full to merge) */
+	.box-dir1 {
+		border-top: 1px solid red;
+	}
+	.box-dir-big {
+		border-top: 1px solid red;
+		border-right: 1px solid red;
+		border-bottom: 1px solid red;
+		border-left: 1px solid red;
+	}
+	.box-dir-big-var {
+		border-top: var(--border-top-width, 1px) var(--border-top-style, solid) var(--border-top-color, red);
+		border-right: var(--border-right-width, 1px) var(--border-right-style, solid) var(--border-right-color, red);
+		border-bottom: var(--border-bottom-width, 1px) var(--border-bottom-style, solid) var(--border-bottom-color, red);
+		border-left: var(--border-left-width, 1px) var(--border-left-style, solid) var(--border-left-color, red);
+	}
+	.box-logic-big {
+		border-block-start: 1px dashed orange;
+		border-block-end: 1px dashed orange;
+		border-inline-start: 1px dashed orange;
+		border-inline-end: 1px dashed orange;
+	}
+	/* Should NOT be merged */
+	.box-dir2 {
+		border-left-style: dashed;
+		border-left-color: green;
+	}
+	.box-dir3 {
+		border-right-width: 2px;
+		border-right-style: dotted;
+	}
+	/* Mixed directional + shorthand (should not merge) */
+	.box-mixed {
+		border: 1px solid black;
+		border-bottom-color: blue;
+	}
+	/* Should merge into border-image */
+	.box-image {
+		border-image: url(border.png) 30 10px 5px stretch;
+	}
+	/* Should merge into border-image (partial merge) */
+	.box-image-partial {
+		border-image: url(frame.svg) 20 fill round;
+	}
+	/* Should not merge (only one declaration) */
+	.box-image-single {
+		border-image-slice: 50;
+	}
+	/* Should merge into border-radius */
+	.box-radius {
+		border-radius: 10px 20px / 40px 30px;
+	}
+	/* Should NOT be merged */
+	.box-radius-logical {
+		border-start-start-radius: 5px;
+		border-start-end-radius: 10px;
+		border-end-end-radius: 15px;
+		border-end-start-radius: 20px;
+	}
+	.box-radius-incomplete {
+		border-top-left-radius: 10px;
+		border-bottom-right-radius: 20px;
+	}
+}

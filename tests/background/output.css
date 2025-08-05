@@ -60,4 +60,8 @@
 		background: red url(bg.png) repeat-x 0% 0%;
 		background-size: cover;
 	}
+	.hero-vars {
+		background: var(--bg-color, red) var(--bg-image, url(bg.png)) var(--bg-repeat, repeat no-repeat) var(--bg-position, left top);
+		background-size: var(--bg-size, cover);
+	}
 }

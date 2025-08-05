@@ -225,6 +225,152 @@ export const background = (layer) => {
 };
 
 /**
+ * Optimizes and fuses border-related declarations into shorthand.
+ *
+ * @param {Node} layer The PostCSS layer to process.
+ *
+ * @returns {void}
+ */
+export const border = (layer) => {
+  const BASE_PROPS = ['width', 'style', 'color'];
+  const IMAGE_PROPS = ['source', 'slice', 'width', 'outset', 'repeat'];
+  const PHYSICAL_RADIUS_PROPS = [
+    'top-left-radius',
+    'top-right-radius',
+    'bottom-right-radius',
+    'bottom-left-radius'
+  ];
+  const DIRECTIONS = [
+    '',
+    'top',
+    'right',
+    'bottom',
+    'left',
+    'inline',
+    'inline-start',
+    'inline-end',
+    'block',
+    'block-start',
+    'block-end'
+  ];
+
+  layer.walkRules((rule) => {
+    // Phase 1: Merge border width + style + color
+    DIRECTIONS.forEach((dir) => {
+      const prefix = dir ? `border-${dir}` : 'border';
+      const decls = {};
+      const toRemove = [];
+
+      rule.walkDecls(new RegExp(`^${prefix}-(width|style|color)$`), (decl) => {
+        const key = decl.prop.replace(`${prefix}-`, '');
+        if (BASE_PROPS.includes(key)) {
+          decls[key] = decl;
+          toRemove.push(decl);
+        }
+      });
+
+      if (BASE_PROPS.every((p) => decls[p])) {
+        const value = `${decls.width.value} ${decls.style.value} ${decls.color.value}`;
+        decls.color.cloneBefore({ prop: prefix, value });
+        toRemove.forEach((d) => d.remove());
+      }
+    });
+
+    // Phase 2: Merge border-image
+    const imageDecls = {};
+    const toRemoveImage = [];
+
+    rule.walkDecls(/^border-image-(source|slice|width|outset|repeat)$/, (decl) => {
+      const subProp = decl.prop.replace('border-image-', '');
+      if (IMAGE_PROPS.includes(subProp)) {
+        imageDecls[subProp] = decl;
+        toRemoveImage.push(decl);
+      }
+    });
+
+    if (Object.keys(imageDecls).length >= 2) {
+      const ordered = IMAGE_PROPS.map((key) => imageDecls[key]?.value).filter(Boolean);
+      const value = ordered.join(' ');
+      toRemoveImage.at(-1).cloneBefore({ prop: 'border-image', value });
+      toRemoveImage.forEach((d) => d.remove());
+    }
+
+    // Phase 3: Merge physical border-radius only
+    const radiusDecls = [];
+    rule.walkDecls(/^border-(top|bottom)-(left|right)-radius$/, (decl) => {
+      const logicalName = decl.prop.replace('border-', '');
+      if (PHYSICAL_RADIUS_PROPS.includes(logicalName)) {
+        radiusDecls.push(decl);
+      }
+    });
+
+    if (radiusDecls.length === 4) {
+      const top = `${radiusDecls[0].value} ${radiusDecls[1].value}`;
+      const bottom = `${radiusDecls[3].value} ${radiusDecls[2].value}`;
+      const value = `${top} / ${bottom}`;
+      radiusDecls.at(-1).cloneBefore({ prop: 'border-radius', value });
+      radiusDecls.forEach((d) => d.remove());
+    }
+  });
+};
+
+/**
+ * Optimizes and fuses font-related declarations into shorthand.
+ *
+ * @param {Node} layer The PostCSS layer to process.
+ *
+ * @returns {void}
+ */
+export const font = (layer) => {
+  const FONT_PROPS = [
+    'font-style',
+    'font-variant',
+    'font-weight',
+    'font-stretch',
+    'font-size',
+    'line-height',
+    'font-family'
+  ];
+
+  layer.walkRules((rule) => {
+    const decls = {};
+    const toRemove = [];
+
+    rule.walkDecls(/^font(-(style|variant|weight|stretch|size|family)|line-height)?$/, (decl) => {
+      if (FONT_PROPS.includes(decl.prop)) {
+        decls[decl.prop] = decl;
+        toRemove.push(decl);
+      }
+    });
+
+    // Ensure minimum required properties for valid shorthand
+    if (!decls['font-size'] || !decls['font-family']) return;
+
+    // Build value in proper order
+    const parts = [];
+    if (decls['font-style']) parts.push(decls['font-style'].value);
+    if (decls['font-variant']) parts.push(decls['font-variant'].value);
+    if (decls['font-weight']) parts.push(decls['font-weight'].value);
+    if (decls['font-stretch']) parts.push(decls['font-stretch'].value);
+
+    let size = decls['font-size'].value;
+    if (decls['line-height']) {
+      size += `/${decls['line-height'].value}`;
+    }
+    parts.push(size);
+    parts.push(decls['font-family'].value);
+
+    // Insert shorthand before last declaration (typically font-family)
+    decls['font-family'].cloneBefore({
+      prop: 'font',
+      value: parts.join(' ')
+    });
+
+    toRemove.forEach((d) => d.remove());
+  });
+};
+
+/**
  * Optimizes strings by enforcing double quotes and removing them when safe.
  * WARNING: Optimization of values is incomplete.
  * Escaped quotes and sequences like \n, \t, \\ may be broken.

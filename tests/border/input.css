@@ -1,0 +1,179 @@
+/* Full shorthand candidates */
+
+.box1 {
+	border-width: 1px;
+	border-style: solid;
+	border-color: red;
+}
+
+/* Should NOT be merged */
+
+.box2 {
+	border-style: dashed;
+	border-color: blue;
+}
+
+.box3 {
+	border-width: 2px;
+	border-color: green;
+}
+
+.box4 {
+	border-width: 3px;
+	border-style: dotted;
+}
+
+.box5 {
+	border-color: purple;
+}
+
+.box6 {
+	border-style: double;
+}
+
+/* Logical properties */
+
+.box-logical1 {
+	border-block-width: 2px;
+	border-block-style: solid;
+	border-block-color: red;
+}
+
+/* Should NOT be merged */
+
+.box-logical2 {
+	border-inline-style: dashed;
+	border-inline-color: orange;
+}
+
+.box-logical3 {
+	border-inline-width: 1px;
+}
+
+/* Directional: top, right, bottom, left (must be full to merge) */
+
+.box-dir1 {
+	border-top-width: 1px;
+	border-top-style: solid;
+	border-top-color: red;
+}
+
+.box-dir-big {
+	border-top-width: 1px;
+	border-top-style: solid;
+	border-top-color: red;
+
+	border-right-width: 1px;
+	border-right-style: solid;
+	border-right-color: red;
+
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+	border-bottom-color: red;
+
+	border-left-width: 1px;
+	border-left-style: solid;
+	border-left-color: red;
+}
+
+.box-dir-big-var {
+	border-top-width: var(--border-top-width, 1px);
+	border-top-style: var(--border-top-style, solid);
+	border-top-color: var(--border-top-color, red);
+
+	border-right-width: var(--border-right-width, 1px);
+	border-right-style: var(--border-right-style, solid);
+	border-right-color: var(--border-right-color, red);
+
+	border-bottom-width: var(--border-bottom-width, 1px);
+	border-bottom-style: var(--border-bottom-style, solid);
+	border-bottom-color: var(--border-bottom-color, red);
+
+	border-left-width: var(--border-left-width, 1px);
+	border-left-style: var(--border-left-style, solid);
+	border-left-color: var(--border-left-color, red);
+}
+
+.box-logic-big {
+	border-block-start-width: 1px;
+	border-block-start-style: dashed;
+	border-block-start-color: orange;
+
+	border-block-end-width: 1px;
+	border-block-end-style: dashed;
+	border-block-end-color: orange;
+
+	border-inline-start-width: 1px;
+	border-inline-start-style: dashed;
+	border-inline-start-color: orange;
+
+	border-inline-end-width: 1px;
+	border-inline-end-style: dashed;
+	border-inline-end-color: orange;
+}
+
+/* Should NOT be merged */
+
+.box-dir2 {
+	border-left-style: dashed;
+	border-left-color: green;
+}
+
+.box-dir3 {
+	border-right-width: 2px;
+	border-right-style: dotted;
+}
+
+/* Mixed directional + shorthand (should not merge) */
+
+.box-mixed {
+	border: 1px solid black;
+	border-bottom-color: blue;
+}
+
+/* Should merge into border-image */
+
+.box-image {
+	border-image-source: url(border.png);
+	border-image-slice: 30;
+	border-image-width: 10px;
+	border-image-outset: 5px;
+	border-image-repeat: stretch;
+}
+
+/* Should merge into border-image (partial merge) */
+
+.box-image-partial {
+	border-image-source: url(frame.svg);
+	border-image-slice: 20 fill;
+	border-image-repeat: round;
+}
+
+/* Should not merge (only one declaration) */
+
+.box-image-single {
+	border-image-slice: 50;
+}
+
+/* Should merge into border-radius */
+
+.box-radius {
+	border-top-left-radius: 10px;
+	border-top-right-radius: 20px;
+	border-bottom-right-radius: 30px;
+	border-bottom-left-radius: 40px;
+}
+
+/* Should NOT be merged */
+
+.box-radius-logical {
+	border-start-start-radius: 5px;
+	border-start-end-radius: 10px;
+	border-end-end-radius: 15px;
+	border-end-start-radius: 20px;
+}
+
+.box-radius-incomplete {
+	border-top-left-radius: 10px;
+	border-bottom-right-radius: 20px;
+}
