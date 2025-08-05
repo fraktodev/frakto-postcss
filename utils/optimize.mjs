@@ -130,6 +130,191 @@ export const mediaQueries = (layer) => {
 };
 
 /**
+ * Optimizes strings by enforcing double quotes and removing them when safe.
+ * WARNING: Optimization of values is incomplete.
+ * Escaped quotes and sequences like \n, \t, \\ may be broken.
+ * TODO: Replace with a custom parser that safely tokenizes string content.
+ *
+ * @param {Node} layer The PostCSS layer containing CSS rules.
+ *
+ * @returns {void}
+ */
+export const quotes = (layer) => {
+  const hasFunction = (value) => /\b[a-zA-Z-]+\s*\(/.test(value);
+  const quotedProps = new Set([
+    'content',
+    'quotes',
+    'font-family',
+    'speak-as',
+    'voice-family',
+    'animation-name',
+    'cursor',
+    'list-style',
+    'counter-reset',
+    'counter-increment'
+  ]);
+
+  layer.walkDecls((decl) => {
+    if (hasFunction(decl.value)) {
+      return;
+    }
+
+    if (quotedProps.has(decl.prop)) {
+      decl.value = normalize(decl.value, 'single');
+      return;
+    }
+
+    decl.value = decl.value.replace(/['"]/g, '');
+  });
+};
+
+/**
+ * Optimizes and fuses margin-related declarations into shorthand.
+ *
+ * @param {Node} layer The PostCSS layer to process.
+ *
+ * @returns {void}
+ */
+export const spacing = (layer) => {
+  const TYPES = ['margin', 'padding'];
+  const PHYSICAL = ['top', 'right', 'bottom', 'left'];
+
+  layer.walkRules((rule) => {
+    TYPES.forEach((type) => {
+      const decls = rule.nodes.filter((n) => n.type === 'decl');
+
+      // Handle physical sides
+      const physicalMap = {};
+      PHYSICAL.forEach((side) => {
+        const prop = `${type}-${side}`;
+        const decl = decls.find((d) => d.prop === prop);
+        if (decl) physicalMap[side] = decl;
+      });
+
+      if (PHYSICAL.every((s) => physicalMap[s])) {
+        const value = [
+          physicalMap.top.value,
+          physicalMap.right.value,
+          physicalMap.bottom.value,
+          physicalMap.left.value
+        ].join(' ');
+        physicalMap.left.cloneBefore({ prop: type, value });
+        PHYSICAL.forEach((s) => physicalMap[s].remove());
+      }
+
+      // Handle logical block
+      const blockStart = decls.find((d) => d.prop === `${type}-block-start`);
+      const blockEnd = decls.find((d) => d.prop === `${type}-block-end`);
+      if (blockStart && blockEnd) {
+        const value = `${blockStart.value} ${blockEnd.value}`;
+        blockEnd.cloneBefore({ prop: `${type}-block`, value });
+        blockStart.remove();
+        blockEnd.remove();
+      }
+
+      // Handle logical inline
+      const inlineStart = decls.find((d) => d.prop === `${type}-inline-start`);
+      const inlineEnd = decls.find((d) => d.prop === `${type}-inline-end`);
+      if (inlineStart && inlineEnd) {
+        const value = `${inlineStart.value} ${inlineEnd.value}`;
+        inlineEnd.cloneBefore({ prop: `${type}-inline`, value });
+        inlineStart.remove();
+        inlineEnd.remove();
+      }
+    });
+  });
+};
+
+/**
+ * Optimizes and fuses font-related declarations into shorthand.
+ *
+ * @param {Node} layer The PostCSS layer to process.
+ *
+ * @returns {void}
+ */
+export const font = (layer) => {
+  const FONT_PROPS = [
+    'font-style',
+    'font-variant',
+    'font-weight',
+    'font-stretch',
+    'font-size',
+    'line-height',
+    'font-family'
+  ];
+
+  layer.walkRules((rule) => {
+    const decls = {};
+    const toRemove = [];
+
+    rule.walkDecls(/^font(-(style|variant|weight|stretch|size|family)|line-height)?$/, (decl) => {
+      if (FONT_PROPS.includes(decl.prop)) {
+        decls[decl.prop] = decl;
+        toRemove.push(decl);
+      }
+    });
+
+    // Ensure minimum required properties for valid shorthand
+    if (!decls['font-size'] || !decls['font-family']) return;
+
+    // Build value in proper order
+    const parts = [];
+    if (decls['font-style']) parts.push(decls['font-style'].value);
+    if (decls['font-variant']) parts.push(decls['font-variant'].value);
+    if (decls['font-weight']) parts.push(decls['font-weight'].value);
+    if (decls['font-stretch']) parts.push(decls['font-stretch'].value);
+
+    let size = decls['font-size'].value;
+    if (decls['line-height']) {
+      size += `/${decls['line-height'].value}`;
+    }
+    parts.push(size);
+    parts.push(decls['font-family'].value);
+
+    // Insert shorthand before last declaration (typically font-family)
+    decls['font-family'].cloneBefore({
+      prop: 'font',
+      value: parts.join(' ')
+    });
+
+    toRemove.forEach((d) => d.remove());
+  });
+};
+
+/**
+ * Optimizes and fuses `list-style-*` declarations into shorthand.
+ *
+ * @param {Node} layer The PostCSS layer to process.
+ *
+ * @returns {void}
+ */
+export const listStyle = (layer) => {
+  const LIST_PROPS = ['type', 'position', 'image'];
+
+  layer.walkRules((rule) => {
+    const decls = {};
+    const toRemove = [];
+
+    rule.walkDecls(/^list-style-(type|position|image)$/, (decl) => {
+      const key = decl.prop.replace('list-style-', '');
+      decls[key] = decl;
+      toRemove.push(decl);
+    });
+
+    const keys = Object.keys(decls);
+    if (keys.length < 2) return;
+
+    const shorthandValue = LIST_PROPS.map((key) => decls[key]?.value)
+      .filter(Boolean)
+      .join(' ');
+    const insertBefore = decls[keys.at(-1)];
+
+    insertBefore.cloneBefore({ prop: 'list-style', value: shorthandValue });
+    toRemove.forEach((d) => d.remove());
+  });
+};
+
+/**
  * Optimizes and compresses background-related CSS declarations.
  *
  * @param {Node} layer The PostCSS layer containing CSS rules.
@@ -315,96 +500,32 @@ export const border = (layer) => {
 };
 
 /**
- * Optimizes and fuses font-related declarations into shorthand.
+ * Optimizes and fuses outline-related declarations into shorthand.
  *
  * @param {Node} layer The PostCSS layer to process.
  *
  * @returns {void}
  */
-export const font = (layer) => {
-  const FONT_PROPS = [
-    'font-style',
-    'font-variant',
-    'font-weight',
-    'font-stretch',
-    'font-size',
-    'line-height',
-    'font-family'
-  ];
+export const outline = (layer) => {
+  const PROPS = ['width', 'style', 'color'];
 
   layer.walkRules((rule) => {
     const decls = {};
     const toRemove = [];
 
-    rule.walkDecls(/^font(-(style|variant|weight|stretch|size|family)|line-height)?$/, (decl) => {
-      if (FONT_PROPS.includes(decl.prop)) {
-        decls[decl.prop] = decl;
+    rule.walkDecls(/^outline-(width|style|color)$/, (decl) => {
+      const key = decl.prop.replace('outline-', '');
+      if (PROPS.includes(key)) {
+        decls[key] = decl;
         toRemove.push(decl);
       }
     });
 
-    // Ensure minimum required properties for valid shorthand
-    if (!decls['font-size'] || !decls['font-family']) return;
-
-    // Build value in proper order
-    const parts = [];
-    if (decls['font-style']) parts.push(decls['font-style'].value);
-    if (decls['font-variant']) parts.push(decls['font-variant'].value);
-    if (decls['font-weight']) parts.push(decls['font-weight'].value);
-    if (decls['font-stretch']) parts.push(decls['font-stretch'].value);
-
-    let size = decls['font-size'].value;
-    if (decls['line-height']) {
-      size += `/${decls['line-height'].value}`;
+    const found = PROPS.filter((p) => decls[p]);
+    if (found.length >= 2) {
+      const value = found.map((p) => decls[p].value).join(' ');
+      decls[found.at(-1)].cloneBefore({ prop: 'outline', value });
+      toRemove.forEach((d) => d.remove());
     }
-    parts.push(size);
-    parts.push(decls['font-family'].value);
-
-    // Insert shorthand before last declaration (typically font-family)
-    decls['font-family'].cloneBefore({
-      prop: 'font',
-      value: parts.join(' ')
-    });
-
-    toRemove.forEach((d) => d.remove());
-  });
-};
-
-/**
- * Optimizes strings by enforcing double quotes and removing them when safe.
- * WARNING: Optimization of values is incomplete.
- * Escaped quotes and sequences like \n, \t, \\ may be broken.
- * TODO: Replace with a custom parser that safely tokenizes string content.
- *
- * @param {Node} layer The PostCSS layer containing CSS rules.
- *
- * @returns {void}
- */
-export const quotes = (layer) => {
-  const hasFunction = (value) => /\b[a-zA-Z-]+\s*\(/.test(value);
-  const quotedProps = new Set([
-    'content',
-    'quotes',
-    'font-family',
-    'speak-as',
-    'voice-family',
-    'animation-name',
-    'cursor',
-    'list-style',
-    'counter-reset',
-    'counter-increment'
-  ]);
-
-  layer.walkDecls((decl) => {
-    if (hasFunction(decl.value)) {
-      return;
-    }
-
-    if (quotedProps.has(decl.prop)) {
-      decl.value = normalize(decl.value, 'single');
-      return;
-    }
-
-    decl.value = decl.value.replace(/['"]/g, '');
   });
 };

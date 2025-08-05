@@ -1,0 +1,84 @@
+/* Should merge into margin */
+.box-margin {
+	margin-top: 10px;
+	margin-right: 20px;
+	margin-bottom: 30px;
+	margin-left: 40px;
+}
+
+/* Should merge into padding */
+.box-padding {
+	padding-top: 5px;
+	padding-right: 10px;
+	padding-bottom: 15px;
+	padding-left: 20px;
+}
+
+/* Should merge into margin-block margin-inline */
+.box-margin-inline-block {
+	margin-block-start: 10px;
+	margin-block-end: 30px;
+	margin-inline-start: 40px;
+	margin-inline-end: 20px;
+}
+
+/* Should merge into margin-inline */
+.box-margin-inline {
+	margin-inline-start: 40px;
+	margin-inline-end: 20px;
+}
+
+/* Should merge into margin-block */
+.box-margin-block {
+	margin-block-start: 3rem;
+	margin-block-end: 4rem;
+}
+
+/* Should merge into padding-block padding-inline */
+.box-padding-inline-block {
+	padding-block-start: 10px;
+	padding-block-end: 30px;
+	padding-inline-start: 40px;
+	padding-inline-end: 20px;
+}
+
+/* Should merge into padding-inline */
+.box-padding-inline {
+	padding-inline-start: 8px;
+	padding-inline-end: 12px;
+}
+
+/* Should merge into padding-block */
+.box-padding-block {
+	padding-block-start: 16px;
+	padding-block-end: 24px;
+}
+
+/* Should NOT merge — only three sides */
+.box-margin-incomplete {
+	margin-top: 1em;
+	margin-right: 2em;
+	margin-bottom: 3em;
+	/* missing left */
+}
+
+/* Should NOT merge — only one side */
+.box-padding-single {
+	padding-left: 15px;
+}
+
+/* Should merge — includes variables */
+.box-margin-vars {
+	margin-top: var(--top);
+	margin-right: var(--right);
+	margin-bottom: var(--bottom);
+	margin-left: var(--left);
+}
+
+/* Should merge — includes variables */
+.box-padding-vars {
+	padding-top: var(--top);
+	padding-right: var(--right);
+	padding-bottom: var(--bottom);
+	padding-left: var(--left);
+}

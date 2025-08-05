@@ -1,0 +1,22 @@
+@charset "UTF-8";
+@layer root {
+	/* Should merge into list-style */
+	ul.example-1 {
+		list-style: disc inside url(bullet.png);
+	}
+	/* Should merge into list-style with type and position only */
+	ul.example-2 {
+		list-style: square outside;
+	}
+	/* Should merge into list-style with image and type */
+	ul.example-3 {
+		list-style: circle url(dot.svg);
+	}
+	ul.example-4 {
+		list-style: var(--list-type) url(dot.svg);
+	}
+	/* Should NOT merge (only one declaration) */
+	ul.example-5 {
+		list-style-position: inside;
+	}
+}

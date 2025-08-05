@@ -1,0 +1,45 @@
+/* Should remain as is (only one sub-property) */
+.outline-width-only {
+	outline-width: 2px;
+}
+
+/* Should remain as is (only one sub-property) */
+.outline-style-only {
+	outline-style: dashed;
+}
+
+/* Should remain as is (only one sub-property) */
+.outline-color-only {
+	outline-color: blue;
+}
+
+/* Should merge (width + style) */
+.outline-width-style {
+	outline-width: 2px;
+	outline-style: solid;
+}
+
+/* Should merge (style + color) */
+.outline-style-color {
+	outline-style: dotted;
+	outline-color: red;
+}
+
+/* Should merge (width + color) */
+.outline-width-color {
+	outline-width: 3px;
+	outline-color: green;
+}
+
+/* Should fully merge (width + style + color) */
+.outline-full {
+	outline-width: 1px;
+	outline-style: dashed;
+	outline-color: black;
+}
+
+.outline-with-var {
+	outline-width: var(--outline-width);
+	outline-style: solid;
+	outline-color: red;
+}

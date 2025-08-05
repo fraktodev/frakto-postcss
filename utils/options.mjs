@@ -8,9 +8,12 @@ const DEFAULTS_OPTIMIZE = {
   comments: 'non-bang', // all, none, non-bang
   charset: true,
   mediaQueries: true,
+  spacing: true,
+  font: true,
+  listStyle: true,
   background: true,
   border: true,
-  font: true
+  outline: true
 };
 
 const DEFAULTS_PURGE = {

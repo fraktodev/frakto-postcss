@@ -1,0 +1,34 @@
+@charset "UTF-8";
+@layer root {
+	/* Should remain as is (only one sub-property) */
+	.outline-width-only {
+		outline-width: 2px;
+	}
+	/* Should remain as is (only one sub-property) */
+	.outline-style-only {
+		outline-style: dashed;
+	}
+	/* Should remain as is (only one sub-property) */
+	.outline-color-only {
+		outline-color: blue;
+	}
+	/* Should merge (width + style) */
+	.outline-width-style {
+		outline: 2px solid;
+	}
+	/* Should merge (style + color) */
+	.outline-style-color {
+		outline: dotted red;
+	}
+	/* Should merge (width + color) */
+	.outline-width-color {
+		outline: 3px green;
+	}
+	/* Should fully merge (width + style + color) */
+	.outline-full {
+		outline: 1px dashed black;
+	}
+	.outline-with-var {
+		outline: var(--outline-width) solid red;
+	}
+}

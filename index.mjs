@@ -73,9 +73,12 @@ const fraktoPostCSS = (ctx = {}, mode = process.env.NODE_ENV || 'production') =>
           const optimizeSteps = {
             comments: (layer) => optimize.comments(layer, opts.optimize.comments, opts.minify),
             mediaQueries: (layer) => optimize.mediaQueries(layer),
+            spacing: (layer) => optimize.spacing(layer),
+            font: (layer) => optimize.font(layer),
+            listStyle: (layer) => optimize.listStyle(layer),
             background: (layer) => optimize.background(layer),
             border: (layer) => optimize.border(layer),
-            font: (layer) => optimize.font(layer)
+            outline: (layer) => optimize.outline(layer)
           };
           Object.entries(optimizeSteps).forEach(([key, fn]) => {
             if (opts.optimize[key]) {

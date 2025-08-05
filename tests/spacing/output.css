@@ -1,0 +1,56 @@
+@charset "UTF-8";
+@layer root {
+	/* Should merge into margin */
+	.box-margin {
+		margin: 10px 20px 30px 40px;
+	}
+	/* Should merge into padding */
+	.box-padding {
+		padding: 5px 10px 15px 20px;
+	}
+	/* Should merge into margin-block margin-inline */
+	.box-margin-inline-block {
+		margin-block: 10px 30px;
+		margin-inline: 40px 20px;
+	}
+	/* Should merge into margin-inline */
+	.box-margin-inline {
+		margin-inline: 40px 20px;
+	}
+	/* Should merge into margin-block */
+	.box-margin-block {
+		margin-block: 3rem 4rem;
+	}
+	/* Should merge into padding-block padding-inline */
+	.box-padding-inline-block {
+		padding-block: 10px 30px;
+		padding-inline: 40px 20px;
+	}
+	/* Should merge into padding-inline */
+	.box-padding-inline {
+		padding-inline: 8px 12px;
+	}
+	/* Should merge into padding-block */
+	.box-padding-block {
+		padding-block: 16px 24px;
+	}
+	/* Should NOT merge — only three sides */
+	.box-margin-incomplete {
+		margin-top: 1em;
+		margin-right: 2em;
+		margin-bottom: 3em;
+		/* missing left */
+	}
+	/* Should NOT merge — only one side */
+	.box-padding-single {
+		padding-left: 15px;
+	}
+	/* Should merge — includes variables */
+	.box-margin-vars {
+		margin: var(--top) var(--right) var(--bottom) var(--left);
+	}
+	/* Should merge — includes variables */
+	.box-padding-vars {
+		padding: var(--top) var(--right) var(--bottom) var(--left);
+	}
+}
