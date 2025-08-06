@@ -1,11 +1,52 @@
 // Dependencies
 import { atRule, list } from 'postcss';
+import valueParser from 'postcss-value-parser';
 
 // Orders
 import fraktoOrder from './orders/frakto.mjs';
 import smacssOrder from './orders/smacss.mjs';
 import concentricOrder from './orders/concentric-css.mjs';
 import alphabeticalOrder from './orders/alphabetical.mjs';
+
+/**
+ * Normalizes quotes characters.
+ * WARNING: Optimization of values is incomplete.
+ * TODO: Need to face multiple values, and functions
+ *
+ * @param {Node}   value      The PostCSS root or rule layer to process.
+ * @param {string} preferred  Optional. Preferred quote type. Default: single.
+ *
+ * @returns {string}
+ */
+const normalizeQuotes = (value, preferred = 'single', preserve = false) => {
+  const quoteChar = preferred === 'double' ? '"' : "'";
+  const parsed = valueParser(value);
+  const hasInnerQuote = (val) => /['"]/.test(val);
+  const needQuote = (val) => /\s|[^\w.-]|^\d/.test(val);
+  const shouldPreserve = (val, preserve) => (/^[a-z-]+\s*\(/i.test(val.trim()) ? false : preserve);
+
+  // Iterate through node
+  parsed.walk((node) => {
+    if (node.type === 'function' && node.nodes.length > 0) {
+      node.nodes.forEach((nodeChild) => {
+        console.log(nodeChild);
+        if (nodeChild.type === 'string' || nodeChild.type === 'word') {
+          if (hasInnerQuote(nodeChild.value)) return;
+          if (needQuote(nodeChild.value)) nodeChild.quote = quoteChar;
+          else nodeChild.quote = null;
+        }
+      });
+    }
+
+    if (node.type === 'string' || node.type === 'word') {
+      if (hasInnerQuote(node.value)) return;
+      if (shouldPreserve(node.value) || needQuote(node.value)) node.quote = quoteChar;
+      else node.quote = null;
+    }
+  });
+
+  return parsed.toString();
+};
 
 /**
  * Optimizes comments based on plugin options.
@@ -139,44 +180,27 @@ export const mediaQueries = (layer) => {
 };
 
 /**
- * Optimizes strings by enforcing double quotes and removing them when safe.
+ * Optimizes strings by enforcing chosen quotes and removing them when safe.
  * WARNING: Optimization of values is incomplete.
  * Escaped quotes and sequences like \n, \t, \\ may be broken.
- * TODO: Replace with a custom parser that safely tokenizes string content.
+ * TODO: Handle AtRules
  *
  * @param {Node} layer The PostCSS layer containing CSS rules.
  *
  * @returns {void}
  */
 export const quotes = (layer) => {
-  const hasFunction = (value) => /\b[a-zA-Z-]+\s*\(/.test(value);
-  const quotedProps = [
-    'animation-name',
-    'content',
-    'cursor',
-    'font-family',
-    'quotes',
-    'list-style',
-    'list-style-image',
-    'speak-as',
-    'voice-family',
-    'counter-reset',
-    'counter-increment',
-    'counter-set',
-    'src'
-  ];
+  const quotedProps = ['content', 'quotes'];
 
   layer.walkDecls((decl) => {
-    if (hasFunction(decl.value)) {
+    const value = decl.value;
+
+    if (quotedProps.includes(decl.prop)) {
+      decl.value = normalizeQuotes(value, 'single', true);
       return;
     }
 
-    if (quotedProps.has(decl.prop)) {
-      decl.value = normalize(decl.value, 'single');
-      return;
-    }
-
-    decl.value = decl.value.replace(/['"]/g, '');
+    decl.value = normalizeQuotes(value, 'single');
   });
 };
 

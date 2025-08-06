@@ -73,6 +73,7 @@ const fraktoPostCSS = (ctx = {}, mode = process.env.NODE_ENV || 'production') =>
           const optimizeSteps = {
             comments: (layer) => optimize.comments(layer, opts.optimize.comments, opts.minify),
             mediaQueries: (layer) => optimize.mediaQueries(layer),
+            quotes: (layer) => optimize.quotes(layer),
             spacing: (layer) => optimize.spacing(layer),
             font: (layer) => optimize.font(layer),
             listStyle: (layer) => optimize.listStyle(layer),
