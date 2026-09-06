@@ -103,7 +103,7 @@ export const getTags = (content) => {
     tags.push(match[1].toLowerCase());
   }
 
-  return [...tags];
+  return [...new Set(tags)];
 };
 
 /**
@@ -127,7 +127,7 @@ export const getIds = (content) => {
     });
   }
 
-  return [...ids];
+  return [...new Set(ids)];
 };
 
 /**
@@ -151,7 +151,41 @@ export const getClasses = (content) => {
     });
   }
 
-  return [...classes];
+  return [...new Set(classes)];
+};
+
+/**
+ * Optimizes comments based on plugin options.
+ *
+ * @param {Object}  node   The PostCSS root or node containing CSS rules.
+ * @param {string}  remove The remove comments option. Accepts 'all', 'non-bang', or false.
+ * @param {boolean} minify The minify option. If true, it may affect comment removal behavior.
+ *
+ * @returns {void}
+ */
+export const comments = (node, remove, minify) => {
+  let shouldRun = false;
+  let preserveImportant = false;
+
+  if (remove === 'all') {
+    shouldRun = true;
+    preserveImportant = false;
+  } else if (remove === 'non-bang') {
+    shouldRun = true;
+    preserveImportant = true;
+  } else if (remove === false && minify === true) {
+    shouldRun = true;
+    preserveImportant = true;
+  }
+
+  if (!shouldRun) return;
+
+  // Iterate through comments
+  node.walkComments((comment) => {
+    const isImportant = comment.text.trim().startsWith('!');
+    if (preserveImportant && isImportant) return;
+    comment.remove();
+  });
 };
 
 /**
@@ -168,7 +202,7 @@ export const charsets = (node) => {
 };
 
 /**
- * Retrieves the purged rule set by removing selectors not found in safe lists.
+ * Purges rules and selectors not found in safe lists.
  *
  * Iterates over all rule selectors and validates tags, classes, and universal selectors
  * against their respective safe lists. Invalid selectors are removed from the rule or discarded entirely.
@@ -179,80 +213,93 @@ export const charsets = (node) => {
  * @returns {void}
  */
 export const nodes = (layer, whiteList) => {
-  const globalWhiteList = [':root', '*', 'html', 'body'];
-  const mergedWhiteList = [...whiteList, ...globalWhiteList];
-  const typesToCheck = ['tag', 'id', 'class', 'universal'];
+  const validSelectors = [];
+  const global = ['*', 'html', 'body'];
+
+  global.reverse().forEach((el) => whiteList.includes(el) || whiteList.unshift(el));
 
   // Normalize selector to match against whitelist format
   const normalizeSelector = (type, value) => {
     if (type === 'class') return `.${value}`;
     if (type === 'id') return `#${value}`;
     if (type === 'universal') return '*';
+    if (type === 'pseudo') return value.startsWith(':') ? value : `:${value}`;
     return value;
   };
 
   // Check if a selector (string or RegExp) is in the whitelist
   const isWhitelisted = (type, value) => {
     const prefixedValue = normalizeSelector(type, value);
-    for (let i = 0; i < mergedWhiteList.length; i++) {
-      const safe = mergedWhiteList[i];
+    for (let i = 0; i < whiteList.length; i++) {
+      const safe = whiteList[i];
       if (typeof safe === 'string' && safe === prefixedValue) return true;
       if (safe instanceof RegExp && safe.test(prefixedValue)) return true;
     }
     return false;
   };
 
-  // Recursively validate a selector by walking its nodes
+  // Analyzes each selector and pushes to validSelectors
   const validateSelector = (selector) => {
-    let isValid = false;
-
-    selector.walk((node) => {
-      // Skip >, +, ~, etc.
-      if (node.type === 'combinator') return;
-
-      // Handle pseudo selectors with nested sub-selectors (e.g., :is(), :not())
-      if (node.type === 'pseudo' && Array.isArray(node.nodes) && node.nodes.length > 0) {
-        const subSelectors = node.nodes.filter((n) => n.type === 'selector');
-        const anyValid = subSelectors.some((subSelector) => validateSelector(subSelector));
-
-        if (anyValid) isValid = true;
-        else isValid = false;
-        return false;
+    // 1. Direct pseudo without a preceding selector (e.g., :root, :focus, ::-webkit-...)
+    if (selector.nodes.length === 1 && selector.nodes[0].type === 'pseudo') {
+      const pseudo = selector.nodes[0];
+      const pseudoName = normalizeSelector('pseudo', pseudo.value);
+      if (!isWhitelisted('pseudo', pseudo.value)) {
+        validSelectors.push(pseudoName);
       }
+      return;
+    }
 
-      // Skip non-nested pseudo classes like :hover, :first-child, etc.
-      if (node.type === 'pseudo') return;
+    // 2. Compound pseudo (e.g., input:hover, .foo:focus)
+    if (selector.nodes.length === 2 && selector.nodes[1].type === 'pseudo') {
+      const base = selector.nodes[0];
+      if (isWhitelisted(base.type, base.value)) {
+        validSelectors.push(selector.toString().trim());
+      }
+      return;
+    }
 
-      // Validate tag, id, class, universal
-      if (typesToCheck.includes(node.type)) isValid = isWhitelisted(node.type, node.value);
-    });
-
-    return isValid;
+    // 3. Complex selectors: analyze the "final" (last relevant)
+    // Look for the last tag, id, class, or universal before any pseudo
+    let lastBase = null;
+    for (let i = selector.nodes.length - 1; i >= 0; i--) {
+      const types = ['tag', 'id', 'class', 'universal'];
+      const node = selector.nodes[i];
+      if (types.includes(node.type)) {
+        lastBase = node;
+        break;
+      }
+    }
+    if (lastBase && isWhitelisted(lastBase.type, lastBase.value)) {
+      validSelectors.push(selector.toString().trim());
+    }
   };
 
-  // Walk through each CSS rule inside the layer
+  // Build the extended validSelectors list
+  layer.walkRules((rule) => {
+    if (!rule.selector) return;
+    selectorParser((selectors) => {
+      selectors.each((selector) => {
+        validateSelector(selector);
+      });
+    }).processSync(rule.selector);
+  });
+
+  console.log(whiteList);
+
+  // Purge the selectors based on the validSelectors list
   layer.walkRules((rule) => {
     if (!rule.selector) return;
     const keepSelectors = [];
 
-    try {
-      // Parse complex selector and check each part individually
-      selectorParser((selectors) => {
-        selectors.each((selector) => {
-          // Normalize and remove leading/trailing whitespace
-          if (validateSelector(selector)) keepSelectors.push(selector.toString().trim());
-        });
-      }).processSync(rule.selector);
+    selectorParser((selectors) => {
+      selectors.each((selector) => {
+        const sel = selector.toString().trim();
+        if (validSelectors.includes(sel)) keepSelectors.push(sel);
+      });
+    }).processSync(rule.selector);
 
-      // If none of the selectors are valid, remove the rule entirely
-      if (keepSelectors.length === 0) rule.remove();
-      else rule.selector = keepSelectors.join(', ');
-    } catch (error) {
-      const warnPurge =
-        pc.bold(pc.yellow('FraktoPostCSS: ')) +
-        pc.yellow(`Error purging selector: ${rule.selector} \n`) +
-        pc.yellow(error);
-      console.warn(warnPurge);
-    }
+    if (keepSelectors.length === 0) rule.remove();
+    else rule.selector = keepSelectors.join(', ');
   });
 };

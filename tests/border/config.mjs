@@ -2,7 +2,7 @@ export default {
   options: {
     minify: false,
     optimize: {
-      comments: 'none'
+      quotes: false
     },
     purge: false
   }

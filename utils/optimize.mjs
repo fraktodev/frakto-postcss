@@ -49,40 +49,6 @@ const normalizeQuotes = (value, preferred = 'single', preserve = false) => {
 };
 
 /**
- * Optimizes comments based on plugin options.
- *
- * @param {Object}  node   The PostCSS root or node containing CSS rules.
- * @param {string}  remove The remove comments option. Accepts 'all', 'non-bang', or 'none'.
- * @param {boolean} minify The minify option. If true, it may affect comment removal behavior.
- *
- * @returns {void}
- */
-export const comments = (node, remove, minify) => {
-  let shouldRun = false;
-  let preserveImportant = false;
-
-  if (remove === 'all') {
-    shouldRun = true;
-    preserveImportant = false;
-  } else if (remove === 'non-bang') {
-    shouldRun = true;
-    preserveImportant = true;
-  } else if (remove === 'none' && minify === true) {
-    shouldRun = true;
-    preserveImportant = true;
-  }
-
-  if (!shouldRun) return;
-
-  // Iterate through comments
-  node.walkComments((comment) => {
-    const isImportant = comment.text.trim().startsWith('!');
-    if (preserveImportant && isImportant) return;
-    comment.remove();
-  });
-};
-
-/**
  * Optimizes and groups `@media` rules by their parameters, then sorts them by priority.
  * Duplicate `@media` queries are merged, preserving node order. Empty rules are removed.
  *

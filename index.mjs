@@ -27,7 +27,7 @@ const fraktoPostCSS = (ctx = {}, mode = process.env.NODE_ENV || 'production') =>
       const orphansLayer = format.getOrphansLayer(root, opts.layers.orphansName, opts.minify);
 
       // Optimize
-      optimize.comments(root, opts.optimize.comments, opts.minify);
+      purge.comments(root, opts.purge.comments, opts.minify);
 
       // Insert charset at the top of the root
       if (opts.optimize.charset) {
@@ -63,30 +63,62 @@ const fraktoPostCSS = (ctx = {}, mode = process.env.NODE_ENV || 'production') =>
       // Iterate through each layer group and apply transformations
       Object.entries(layers).forEach(([layerName, layerData]) => {
         layerData.forEach((layer) => {
-          // Purge
-          purge.charsets(layer);
-          if (opts.purge.enabled && !['theme', 'reset'].includes(layerName)) {
-            purge.nodes(layer, whiteList);
-          }
-
-          // Optimize
-          const optimizeSteps = {
-            comments: (layer) => optimize.comments(layer, opts.optimize.comments, opts.minify),
-            mediaQueries: (layer) => optimize.mediaQueries(layer),
-            quotes: (layer) => optimize.quotes(layer),
-            spacing: (layer) => optimize.spacing(layer),
-            font: (layer) => optimize.font(layer),
-            listStyle: (layer) => optimize.listStyle(layer),
-            background: (layer) => optimize.background(layer),
-            border: (layer) => optimize.border(layer),
-            outline: (layer) => optimize.outline(layer),
-            order: (layer) => optimize.sortDeclarations(layer, opts.optimize.order)
-          };
-          Object.entries(optimizeSteps).forEach(([key, fn]) => {
-            if (opts.optimize[key]) {
-              fn(layer);
+          // Frakto processing steps
+          const processingSteps = {
+            // Purge
+            charsets: {
+              run: () => purge.charsets(layer),
+              enabled: opts.purge.enabled
+            },
+            comments: {
+              run: () => purge.comments(layer, opts.purge.comments, opts.minify),
+              enabled: opts.purge.enabled
+            },
+            nodes: {
+              run: () => purge.nodes(layer, whiteList),
+              enabled: opts.purge.enabled
+            },
+            // Optimize
+            mediaQueries: {
+              run: () => optimize.mediaQueries(layer),
+              enabled: opts.optimize.mediaQueries
+            },
+            /* quotes: {
+              run: () => optimize.quotes(layer),
+              enabled: opts.optimize.enabled && opts.optimize.quotes
+            }, */
+            spacing: {
+              run: () => optimize.spacing(layer),
+              enabled: opts.optimize.spacing
+            },
+            font: {
+              run: () => optimize.font(layer),
+              enabled: opts.optimize.font
+            },
+            listStyle: {
+              run: () => optimize.listStyle(layer),
+              enabled: opts.optimize.listStyle
+            },
+            background: {
+              run: () => optimize.background(layer),
+              enabled: opts.optimize.background
+            },
+            border: {
+              run: () => optimize.border(layer),
+              enabled: opts.optimize.border
+            },
+            outline: {
+              run: () => optimize.outline(layer),
+              enabled: opts.optimize.outline
+            },
+            order: {
+              run: () => optimize.sortDeclarations(layer, opts.optimize.order),
+              enabled: opts.optimize.order
             }
-          });
+          };
+          for (const { run, enabled } of Object.values(processingSteps)) {
+            if (enabled) run();
+          }
 
           // Append layers to maps.
           if (layer.nodes && layer.nodes.length > 0) {

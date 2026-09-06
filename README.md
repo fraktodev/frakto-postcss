@@ -49,19 +49,22 @@ Removes unnecessary whitespace, units, and redundant syntax to generate compact 
 
 A set of optional, fine-grained improvements:
 
-- Removes comments intelligently based on your configuration
-- Groups and sorts media queries by type and specificity (`min-width` → `max-width` → combined `min`/`max` → `prefers-*` → `print`, etc.)
+- Groups and sorts media queries by type and specificity (`min-width` → `max-width` → combined `min`/`max` → `prefers-*` → `print`, etc.).
 - Merges physical and logical `margin-*` and `padding-*` declarations into their respective shorthands (`margin`, `padding`, `margin-block`, `margin-inline`, etc.). Physical requires all four sides; logical merges `*-start` and `*-end` in pairs or as full logical shorthands when possible.
-- Merges multiple `font-*` declarations into a single `font` shorthand when at least two font-related declarations are present
-- Merges multiple `list-style-*` declarations (`list-style-type`, `list-style-position`, `list-style-image`) into a single `list-style` shorthand, when at least two are present
-- Merges background declarations into a shorthand (`background-color`, `background-image`, `background-repeat`, `background-position`). And simplifies values like `repeat no-repeat` → `repeat-x`, and `left top` → `0% 0%`
-- Merges related `border-*` declarations into shorthands (e.g., `border-width`, `border-style`, `border-color`) including directional and logical variants. Also merges `border-image-*` and logical `border-radius` into compact forms
-- Merges multiple `outline-*` declarations (`outline-width`, `outline-style`, `outline-color`) into a single `outline` shorthand, if at least two declarations are present
-- Sorts declarations within each CSS rule according to your preferred strategy: `frakto` (default), `smacss`, `concentric-css`, or `alphabetical`
+- Merges multiple `font-*` declarations into a single `font` shorthand when at least two font-related declarations are present.
+- Merges multiple `list-style-*` declarations (`list-style-type`, `list-style-position`, `list-style-image`) into a single `list-style` shorthand, when at least two are present.
+- Merges background declarations into a shorthand (`background-color`, `background-image`, `background-repeat`, `background-position`). And simplifies values like `repeat no-repeat` → `repeat-x`, and `left top` → `0% 0%`.
+- Merges related `border-*` declarations into shorthands (e.g., `border-width`, `border-style`, `border-color`) including directional and logical variants. Also merges `border-image-*` and logical `border-radius` into compact forms.
+- Merges multiple `outline-*` declarations (`outline-width`, `outline-style`, `outline-color`) into a single `outline` shorthand, if at least two declarations are present.
+- Sorts declarations within each CSS rule according to your preferred strategy: `frakto` (default), `smacss`, `concentric-css`, or `alphabetical`.
 
 #### Purge
 
-Removes unused selectors by scanning your source files and comparing against a safe list (supports literal values and regular expressions)
+A set of optional, fine-grained improvements:
+
+- Removes lost charset atRules. This is mandatory and non-optional, as their presence indicates an invalid CSS state.
+- Removes comments intelligently based on your configuration.
+- Removes unused selectors by scanning your source files and comparing against a safe list (supports literal values and regular expressions)
 
 #### Layering
 
@@ -103,27 +106,27 @@ If a config file is present, inline plugin options will be ignored.
 
 #### optimize Options
 
-| Option         | Type              | Default      | Description                                                                                                                                                                                                                                                                                                                                |
-| -------------- | ----------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `comments`     | `string`          | `'non-bang'` | Controls comment removal:<br>• `'none'`: preserve all<br>• `'non-bang'`: remove all except `/*!`<br>• `'all'`: remove all comments <br>• If set to `'none'` and `minify` is `true`, `'non-bang'` is used instead.                                                                                                                          |
-| `order`        | `string`\|`false` | `'frakto'`   | Reorders declarations inside each CSS rule according to the selected strategy. Available options: `'frakto'`, `'alphabetical'`, `'concentric'`, `'smacss'`. Set to `false` to disable sorting entirely.                                                                                                                                    |
-| `charset`      | `boolean`         | `true`       | Inserts `@charset "UTF-8"` at the top of the CSS, if not already present.                                                                                                                                                                                                                                                                  |
-| `mediaQueries` | `boolean`         | `true`       | Groups and sorts `@media` rules by type and specificity (e.g. `min-width`, `max-width`, `prefers-*`, `print`, etc.). Queries with identical parameters are merged.                                                                                                                                                                         |
-| `spacing`      | `boolean`         | `true`       | Merges and simplifies related `margin-*` and `padding-*` declarations into their respective shorthands. Supports both physical (`top`, `right`, `bottom`, `left`) and logical (`block-*`, `inline-*`) properties. Applied when all required sides or logical pairs are present.                                                            |
-| `font`         | `boolean`         | `true`       | Merges and simplifies related `font-*` declarations (`font-family`, `font-size`, `font-weight`, `font-style`, etc.) into a single `font` shorthand. Applied only when at least two are present.                                                                                                                                            |
-| `listStyle`    | `boolean`         | `true`       | Merges and simplifies related `list-style-*` declarations (`list-style-type`, `list-style-position`, `list-style-image`) into a single `list-style` shorthand. Applied only when at least two are present.                                                                                                                                 |
-| `background`   | `boolean`         | `true`       | Merges and simplifies related `background-*` declarations (e.g. `background-repeat`, `background-position`) into a single shorthand. Applied only when at least two are present.                                                                                                                                                           |
-| `border`       | `boolean`         | `true`       | Merges and simplifies related `border-*` declarations (like `border-width`, `border-style`, `border-color`) into a single shorthand. Also supports directional properties (`border-left`, `border-block`, etc.) as long as all three required sub-properties are present. Extensible to handle `border-image` and `border-radius` as well. |
-| `outline`      | `boolean`         | `true`       | Merges and simplifies related `outline-*` declarations (`outline-width`, `outline-style`, `outline-color`) into the shorthand `outline`. Applied only when at least two are present.                                                                                                                                                       |
+| Option         | Type              | Default    | Description                                                                                                                                                                                                                                                                                                                                |
+| -------------- | ----------------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `charset`      | `boolean`         | `true`     | Inserts `@charset "UTF-8"` at the top of the CSS, if not already present.                                                                                                                                                                                                                                                                  |
+| `mediaQueries` | `boolean`         | `true`     | Groups and sorts `@media` rules by type and specificity (e.g. `min-width`, `max-width`, `prefers-*`, `print`, etc.). Queries with identical parameters are merged.                                                                                                                                                                         |
+| `spacing`      | `boolean`         | `true`     | Merges and simplifies related `margin-*` and `padding-*` declarations into their respective shorthands. Supports both physical (`top`, `right`, `bottom`, `left`) and logical (`block-*`, `inline-*`) properties. Applied when all required sides or logical pairs are present.                                                            |
+| `font`         | `boolean`         | `true`     | Merges and simplifies related `font-*` declarations (`font-family`, `font-size`, `font-weight`, `font-style`, etc.) into a single `font` shorthand. Applied only when at least two are present.                                                                                                                                            |
+| `listStyle`    | `boolean`         | `true`     | Merges and simplifies related `list-style-*` declarations (`list-style-type`, `list-style-position`, `list-style-image`) into a single `list-style` shorthand. Applied only when at least two are present.                                                                                                                                 |
+| `background`   | `boolean`         | `true`     | Merges and simplifies related `background-*` declarations (e.g. `background-repeat`, `background-position`) into a single shorthand. Applied only when at least two are present.                                                                                                                                                           |
+| `border`       | `boolean`         | `true`     | Merges and simplifies related `border-*` declarations (like `border-width`, `border-style`, `border-color`) into a single shorthand. Also supports directional properties (`border-left`, `border-block`, etc.) as long as all three required sub-properties are present. Extensible to handle `border-image` and `border-radius` as well. |
+| `outline`      | `boolean`         | `true`     | Merges and simplifies related `outline-*` declarations (`outline-width`, `outline-style`, `outline-color`) into the shorthand `outline`. Applied only when at least two are present.                                                                                                                                                       |
+| `order`        | `string`\|`false` | `'frakto'` | Reorders declarations inside each CSS rule according to the selected strategy. Available options: `'frakto'`, `'alphabetical'`, `'concentric'`, `'smacss'`. Set to `false` to disable sorting entirely.                                                                                                                                    |
 
 #### purge Options
 
-| Option         | Type                 | Default     | Description                                                                                           |
-| -------------- | -------------------- | ----------- | ----------------------------------------------------------------------------------------------------- |
-| `safeList`     | `(string\|RegExp)[]` | (see below) | Selectors to keep (e.g. `.title`, `#main`, `/\.combo-\d+/`). Accepts class, ID, or tag (with prefix). |
-| `includePaths` | `string[]`           | (see below) | Folders to scan for source files (relative to `process.cwd()`).                                       |
-| `excludePaths` | `string[]`           | (see below) | Folders to ignore: `.git`, `node_modules`, `.next`, `test`, etc.                                      |
-| `files`        | `string[]`           | (see below) | File types to scan: `html`, `astro`, `jsx`, `tsx`. Others will be ignored with a warning.             |
+| Option         | Type                 | Default      | Description                                                                                                                                                                                                     |
+| -------------- | -------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `comments`     | `string`\|`false`    | `'non-bang'` | Controls comment removal:<br>• `false`: preserve all<br>• `'non-bang'`: remove all except `/*!`<br>• `'all'`: remove all comments <br>• If set to `false` and `minify` is `true`, `'non-bang'` is used instead. |
+| `safeList`     | `(string\|RegExp)[]` | (see below)  | Selectors to keep (e.g. `.title`, `#main`, `/\.combo-\d+/`). Accepts class, ID, or tag (with prefix).                                                                                                           |
+| `includePaths` | `string[]`           | (see below)  | Folders to scan for source files (relative to `process.cwd()`).                                                                                                                                                 |
+| `excludePaths` | `string[]`           | (see below)  | Folders to ignore: `.git`, `node_modules`, `.next`, `test`, etc.                                                                                                                                                |
+| `files`        | `string[]`           | (see below)  | File types to scan: `html`, `astro`, `jsx`, `tsx`. Others will be ignored with a warning.                                                                                                                       |
 
 #### layers Options
 

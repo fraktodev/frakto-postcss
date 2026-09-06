@@ -1,66 +1,67 @@
+@charset "UTF-8";
 @layer root {
-	/* Should convert to: background-position: 0% 0%; */
-	.box1 {
+	/* Should convert to: background-position: 0% 0% */
+	.test {
 		background-position: 0% 0%;
 	}
-	/* Should convert to: background-position: 50% 0%; */
-	.box2 {
+	/* Should convert to: background-position: 50% 0% */
+	.test {
 		background-position: 50% 0%;
 	}
-	/* Should convert to: background-position: 100% 50%; */
-	.box3 {
+	/* Should convert to: background-position: 100% 50% */
+	.test {
 		background-position: 100% 50%;
 	}
-	/* Should convert to: background-position: 50% 100%; */
-	.box4 {
+	/* Should convert to: background-position: 50% 100% */
+	.test {
 		background-position: 50% 100%;
 	}
-	/* Should convert to: background: url("img.png") no-repeat 0% 0%; */
-	.box5 {
+	/* Should convert to: background: url("img.png") no-repeat 0% 0% */
+	.test {
 		background: url('img.png') no-repeat 0% 0%;
 	}
-	/* Should convert to: background: url("bg.jpg") repeat-x 100% 0%; */
-	.box6 {
+	/* Should convert to: background: url("bg.jpg") repeat-x 100% 0% */
+	.test {
 		background: url('bg.jpg') repeat-x 100% 0%;
 	}
 	/* Should stay the same (no keywords) */
-	.box7 {
+	.test {
 		background-position: 30% 70%;
 	}
 	/* Should convert only keywords inside background */
-	.box8 {
+	.test {
 		background: linear-gradient(to bottom, #fff, #000) no-repeat 0% 50%;
 	}
-	/* Should become: background-repeat: repeat-x; */
-	.bg1 {
+	/* Should become: background-repeat: repeat-x */
+	.test {
 		background-repeat: repeat-x;
 	}
-	/* Should become: background-repeat: repeat-y; */
-	.bg2 {
+	/* Should become: background-repeat: repeat-y */
+	.test {
 		background-repeat: repeat-y;
 	}
-	/* Should become: background-repeat: repeat; */
-	.bg3 {
+	/* Should become: background-repeat: repeat */
+	.test {
 		background-repeat: repeat;
 	}
-	/* Should become: background-repeat: no-repeat; */
-	.bg4 {
+	/* Should become: background-repeat: no-repeat */
+	.test {
 		background-repeat: no-repeat;
 	}
-	/* Should become: background: url(a.png) repeat-x 0% 0%; */
-	.bg5 {
+	/* Should become: background: url(a.png) repeat-x 0% 0% */
+	.test {
 		background: url(a.png) repeat-x 0% 0%;
 	}
 	/* Should remain untouched (not a known pair) */
-	.bg6 {
+	.test {
 		background-repeat: round space;
 	}
-	/* Should be merged into: background: red url(bg.png) repeat-x 0% 0%; */
-	.hero {
+	/* Should be merged into: background */
+	.test {
 		background: red url(bg.png) repeat-x 0% 0%;
 		background-size: cover;
 	}
-	.hero-vars {
+	.test {
 		background: var(--bg-color, red) var(--bg-image, url(bg.png)) var(--bg-repeat, repeat no-repeat) var(--bg-position, left top);
 		background-size: var(--bg-size, cover);
 	}

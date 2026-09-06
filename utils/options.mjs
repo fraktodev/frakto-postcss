@@ -5,20 +5,20 @@ import fs from 'fs';
 
 // Defaults
 const DEFAULTS_OPTIMIZE = {
-  comments: 'non-bang', // all, none, non-bang
-  quotes: true,
-  order: 'frakto', // frakto, alphabetical, concentric, smacss, false
   charset: true,
+  quotes: true, // Experimental Not documented yet
   mediaQueries: true,
   spacing: true,
   font: true,
   listStyle: true,
   background: true,
   border: true,
-  outline: true
+  outline: true,
+  order: 'frakto' // frakto, alphabetical, concentric, smacss, false
 };
 
 const DEFAULTS_PURGE = {
+  comments: 'non-bang', // all, non-bang, false
   safeList: [],
   includePaths: ['.'],
   excludePaths: ['.git', '.vscode', 'tmp', 'test', 'tests', 'vendor', 'node_modules'],
@@ -38,14 +38,18 @@ const DEFAULTS_LAYERS = {
  *
  * @returns {Object}
  */
-const invertDefaults = (type, defaults) => {
+const invertDefaults = (defaults) => {
   const result = {};
 
   for (const key in defaults) {
-    if (type === 'optimize') {
-      result[key] = key === 'comments' ? 'none' : false;
-    } else if (type === 'purge') {
-      result[key] = Array.isArray(defaults[key]) ? [] : '';
+    const value = defaults[key];
+
+    if (typeof value === 'boolean' || typeof value === 'string') {
+      result[key] = false;
+    } else if (Array.isArray(value)) {
+      result[key] = [];
+    } else {
+      result[key] = '';
     }
   }
 
@@ -84,8 +88,8 @@ export const resolve = (ctx, mode = 'production') => {
     optimize: (() => {
       const user = userConfig?.optimize;
 
-      if (user === false) return invertDefaults('optimize', DEFAULTS_OPTIMIZE);
-      if (user === true || user == null) return { ...DEFAULTS_OPTIMIZE };
+      if (user === false) return invertDefaults(DEFAULTS_OPTIMIZE);
+      if (user === true || user == null) return DEFAULTS_OPTIMIZE;
       return { ...DEFAULTS_OPTIMIZE, ...user };
     })(),
 
@@ -93,7 +97,7 @@ export const resolve = (ctx, mode = 'production') => {
     purge: (() => {
       const user = userConfig?.purge;
 
-      if (user === false) return { enabled: false, ...invertDefaults('purge', DEFAULTS_PURGE) };
+      if (user === false) return { enabled: false, ...invertDefaults(DEFAULTS_PURGE) };
       if (user === true || user == null) return { enabled: true, ...DEFAULTS_PURGE };
       return { enabled: true, ...DEFAULTS_PURGE, ...user };
     })(),
@@ -107,7 +111,7 @@ export const resolve = (ctx, mode = 'production') => {
 
   if (mode === 'development') {
     merged.minify = false;
-    merged.purge = { enabled: false, ...invertDefaults('purge', DEFAULTS_PURGE) };
+    merged.purge = { enabled: false, ...invertDefaults(DEFAULTS_PURGE) };
   }
 
   return merged;

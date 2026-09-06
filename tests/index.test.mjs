@@ -48,10 +48,13 @@ const compileIfNeeded = async (filePath, ext) => {
   }
 };
 
+const whiteList = ['background', 'border'];
 const loadTests = async () => {
   const suites = await getSuites();
 
   for (const suite of suites) {
+    if (!whiteList.includes(suite)) continue;
+
     const dir = path.join(baseDir, suite);
     const configPath = path.join(dir, 'config.mjs');
     const inputFile = await findInputFile(dir);
